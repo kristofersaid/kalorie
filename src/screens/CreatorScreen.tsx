@@ -227,11 +227,16 @@ export function CreatorScreen({ navigation, route }: Props) {
     if (scanLock.current) return;
     scanLock.current = true;
     setScanning(false);
-    lookupCode(data).finally(() => {
-      setTimeout(() => {
-        scanLock.current = false;
-      }, 1500);
-    });
+    // Skan w kreatorze tylko UZUPEŁNIA pole kodu (bez szukania online).
+    const digits = data.trim().replace(/\s+/g, '');
+    setCode(digits);
+    setErr(null);
+    setInfo(
+      `Zeskanowano kod: ${digits}. Uzupełnij resztę danych albo stuknij OK, aby pobrać je z Open Food Facts.`,
+    );
+    setTimeout(() => {
+      scanLock.current = false;
+    }, 1500);
   };
 
   const startScan = async () => {
