@@ -22,6 +22,7 @@ import { offErrorMessage, productByBarcode } from '../lib/off';
 import { choosePhoto } from '../lib/photo';
 import { aiConfigOf, useStore } from '../store/useStore';
 import { RootStackParamList } from '../nav';
+import { CategoryChips } from '../components/CategoryChips';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Creator'>;
 
@@ -48,6 +49,7 @@ export function CreatorScreen({ navigation, route }: Props) {
   const [w, setW] = useState('');
   const [code, setCode] = useState('');
   const [photo, setPhoto] = useState<string | null>(null);
+  const [defCat, setDefCat] = useState(4);
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -74,6 +76,7 @@ export function CreatorScreen({ navigation, route }: Props) {
           setW(String(row.wegle100));
           setCode(row.kod ?? '');
           setPhoto(row.zdjecie ?? null);
+          setDefCat(row.kategoria);
         }
       } catch {
         Alert.alert('Błąd', 'Nie udało się wczytać wpisu.');
@@ -265,6 +268,7 @@ export function CreatorScreen({ navigation, route }: Props) {
         wegle100: toDouble(w),
         kod: code.trim() === '' ? null : code.trim(),
         zdjecie: photo,
+        kategoria: defCat,
       };
       if (editId != null) await updateFavorite(editId, data);
       else await insertFavorite(data);
@@ -534,6 +538,16 @@ export function CreatorScreen({ navigation, route }: Props) {
           </Text>
         </TouchableOpacity>
       )}
+
+      {/* Sekcja 4: domyślna kategoria */}
+      <Text style={{ fontSize: 17, fontWeight: '800', color: colors.text }}>
+        4. Co to zwykle jest?
+      </Text>
+      <Text style={{ color: colors.text, opacity: 0.7, fontSize: 13 }}>
+        Przy dodawaniu „zjadłem” ta kategoria wybierze się sama (np. Mars →
+        Przekąski). Zawsze możesz ją zmienić ręcznie.
+      </Text>
+      <CategoryChips value={defCat} onChange={setDefCat} />
 
       <TouchableOpacity
         onPress={save}

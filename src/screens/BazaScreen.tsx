@@ -22,6 +22,7 @@ import {
   searchFavorites,
 } from '../db/favorites';
 import { fmtKcal } from '../lib/format';
+import { CATEGORIES } from '../lib/constants';
 import { useStore } from '../store/useStore';
 import { RootStackParamList, TabParamList } from '../nav';
 
@@ -160,6 +161,7 @@ export function BazaScreen({ navigation }: Props) {
                   {fmtKcal(f.kcal100)} /100 g • B:{f.bialko100.toFixed(1)}g T:
                   {f.tluszcze100.toFixed(1)}g W:{f.wegle100.toFixed(1)}g
                   {f.kod ? ` • EAN: ${f.kod}` : ''}
+                  {`\nZwykle: ${CATEGORIES[f.kategoria] ?? CATEGORIES[4]}`}
                 </Text>
               </View>
             </View>

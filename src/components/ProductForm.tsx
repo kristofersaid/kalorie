@@ -10,8 +10,10 @@ import {
 import { useTheme } from '@react-navigation/native';
 import { FavoriteRow } from '../db/database';
 import { insertFavorite, updateFavorite } from '../db/favorites';
+import { CATEGORIES } from '../lib/constants';
 import { toDouble } from '../lib/format';
 import { choosePhoto } from '../lib/photo';
+import { CategoryChips } from './CategoryChips';
 
 /**
  * Formularz produktu (wartości na 100 g) z opcjonalnym zdjęciem i kodem.
@@ -36,6 +38,7 @@ export function ProductForm({
   const [t, setT] = useState(initial ? String(initial.tluszcze100) : '');
   const [w, setW] = useState(initial ? String(initial.wegle100) : '');
   const [kod, setKod] = useState(initial?.kod ?? '');
+  const [defCat, setDefCat] = useState(initial?.kategoria ?? 4);
   const [zdjecie, setZdjecie] = useState<string | null>(
     initial?.zdjecie ?? null,
   );
@@ -64,6 +67,7 @@ export function ProductForm({
         wegle100: toDouble(w),
         kod: kod.trim() === '' ? null : kod.trim(),
         zdjecie,
+        kategoria: defCat,
       };
       if (initial && initial.id > 0) await updateFavorite(initial.id, data);
       else await insertFavorite(data);
@@ -94,6 +98,15 @@ export function ProductForm({
       <TextInput value={t} onChangeText={setT} placeholder="Tłuszcze /100 g" keyboardType="numeric" placeholderTextColor={colors.text + '66'} style={inputStyle} />
       <TextInput value={w} onChangeText={setW} placeholder="Węgle /100 g" keyboardType="numeric" placeholderTextColor={colors.text + '66'} style={inputStyle} />
       <TextInput value={kod} onChangeText={setKod} placeholder="Kod kreskowy (opcjonalnie)" placeholderTextColor={colors.text + '66'} style={inputStyle} />
+      <Text style={{ color: colors.text, fontWeight: '600', marginBottom: 6, fontSize: 13 }}>
+        Co to zwykle jest? (wybierze się samo przy dodawaniu)
+      </Text>
+      <View style={{ marginBottom: 8 }}>
+        <CategoryChips value={defCat} onChange={setDefCat} />
+      </View>
+      <Text style={{ color: colors.text, opacity: 0.6, fontSize: 12, marginBottom: 8 }}>
+        Aktualnie: {CATEGORIES[defCat] ?? 'Przekąski'}
+      </Text>
       {zdjecie ? (
         <View
           style={{

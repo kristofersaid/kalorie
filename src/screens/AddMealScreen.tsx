@@ -667,6 +667,12 @@ function SearchTab(p: {
               f.zdjecie,
               'lokalne',
               () => {
+                // Kategoria startowa z bazy (np. Mars → Przekąski).
+                p.setCategory(
+                  f.kategoria >= 0 && f.kategoria < CATEGORIES.length
+                    ? f.kategoria
+                    : p.category,
+                );
                 setPicked({ ...f, fromLocal: true });
                 setGrams(100);
               },

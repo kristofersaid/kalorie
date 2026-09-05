@@ -304,7 +304,12 @@ function ProductTile({
   const { colors } = useTheme();
   const [adding, setAdding] = useState(false);
   const [grams, setGrams] = useState('100');
-  const [cat, setCat] = useState(defaultCategory());
+  // Startowa kategoria z bazy (np. Mars → Przekąski), do ręcznej zmiany.
+  const [cat, setCat] = useState(
+    f.kategoria >= 0 && f.kategoria < CATEGORIES.length
+      ? f.kategoria
+      : defaultCategory(),
+  );
 
   const confirmAdd = async () => {
     const g = toDouble(grams, 0);
@@ -411,6 +416,12 @@ function ProductTile({
           <TouchableOpacity
             onPress={() => {
               setGrams('100');
+              // Odśwież kategorię z bazy przy każdym otwarciu.
+              setCat(
+                f.kategoria >= 0 && f.kategoria < CATEGORIES.length
+                  ? f.kategoria
+                  : defaultCategory(),
+              );
               setAdding(true);
             }}
             style={{

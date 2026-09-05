@@ -28,6 +28,8 @@ export type FavoriteRow = {
   kod: string | null;
   zdjecie: string | null;
   ulubione: number;
+  /** Domyślna kategoria (indeks z CATEGORIES) przy dodawaniu „zjadłem”. */
+  kategoria: number;
   created_at: string;
 };
 
@@ -82,6 +84,7 @@ export async function getDb(): Promise<SQLite.SQLiteDatabase> {
         kod TEXT,
         zdjecie TEXT,
         ulubione INTEGER NOT NULL DEFAULT 1,
+        kategoria INTEGER NOT NULL DEFAULT 4,
         created_at TEXT NOT NULL
       );
       CREATE TABLE IF NOT EXISTS templates (
@@ -103,6 +106,14 @@ export async function getDb(): Promise<SQLite.SQLiteDatabase> {
     // Migracja dla baz utworzonych przed v1.1: kolumna na zdjęcie posiłku.
     try {
       await db.execAsync('ALTER TABLE meals ADD COLUMN zdjecie TEXT;');
+    } catch {
+      // Kolumna już istnieje – nic do zrobienia.
+    }
+    // Migracja: domyślna kategoria wpisu w bazie (4 = Przekąski).
+    try {
+      await db.execAsync(
+        'ALTER TABLE favorites ADD COLUMN kategoria INTEGER NOT NULL DEFAULT 4;',
+      );
     } catch {
       // Kolumna już istnieje – nic do zrobienia.
     }

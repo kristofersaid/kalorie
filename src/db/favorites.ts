@@ -26,13 +26,14 @@ export type FavoriteInput = {
   kod?: string | null;
   zdjecie?: string | null;
   ulubione?: boolean;
+  kategoria?: number;
 };
 
 export async function insertFavorite(f: FavoriteInput): Promise<number> {
   const db = await getDb();
   const res = await db.runAsync(
-    `INSERT INTO favorites (nazwa, kcal100, bialko100, tluszcze100, wegle100, kod, zdjecie, ulubione, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO favorites (nazwa, kcal100, bialko100, tluszcze100, wegle100, kod, zdjecie, ulubione, kategoria, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       f.nazwa.trim() === '' ? 'Produkt' : f.nazwa.trim(),
       f.kcal100,
@@ -42,6 +43,7 @@ export async function insertFavorite(f: FavoriteInput): Promise<number> {
       f.kod ?? null,
       f.zdjecie ?? null,
       f.ulubione === false ? 0 : 1,
+      f.kategoria ?? 4,
       new Date().toISOString(),
     ],
   );
@@ -63,7 +65,7 @@ export async function updateFavorite(
   const db = await getDb();
   await db.runAsync(
     `UPDATE favorites SET nazwa = ?, kcal100 = ?, bialko100 = ?, tluszcze100 = ?,
-     wegle100 = ?, kod = ?, zdjecie = ? WHERE id = ?`,
+     wegle100 = ?, kod = ?, zdjecie = ?, kategoria = ? WHERE id = ?`,
     [
       f.nazwa.trim(),
       f.kcal100,
@@ -72,6 +74,7 @@ export async function updateFavorite(
       f.wegle100,
       f.kod ?? null,
       f.zdjecie ?? null,
+      f.kategoria ?? 4,
       id,
     ],
   );
