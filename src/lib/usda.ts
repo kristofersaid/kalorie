@@ -103,8 +103,12 @@ async function fetchFoods(query: string): Promise<FdcFood[]> {
     clearTimeout(t);
   }
   if (!res.ok) throw new Error(`USDA_HTTP_${res.status}`);
-  const data = (await res.json()) as { foods?: FdcFood[] };
-  return data.foods ?? [];
+  try {
+    const data = (await res.json()) as { foods?: FdcFood[] };
+    return data.foods ?? [];
+  } catch {
+    throw new Error('USDA_JSON');
+  }
 }
 
 /** Wyszukiwanie tekstowe w USDA (markowe produkty, USA). */
@@ -138,6 +142,9 @@ export function usdaErrorMessage(e: unknown): string {
       return 'Wyczerpano darmowy limit USDA na tę godzinę. Spróbuj później.';
     }
     return `Serwer USDA zwrócił błąd ${code}.`;
+  }
+  if (msg.includes('USDA_JSON')) {
+    return 'Serwer USDA zwrócił odpowiedź, której nie da się odczytać. Spróbuj w innej sieci.';
   }
   return `Błąd USDA: ${msg}`;
 }

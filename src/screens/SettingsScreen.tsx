@@ -14,6 +14,7 @@ import * as Sharing from 'expo-sharing';
 import { wipeAll } from '../db/database';
 import { exportCsv, importCsv } from '../lib/csv';
 import { AI_PROVIDERS, AiProviderId, listGoogleModels, providerInfo } from '../lib/ai';
+import { APP_VERSION, BUILD_NUMBER } from '../lib/constants';
 import { offErrorMessage, searchOff } from '../lib/off';
 import { searchUsda, usdaErrorMessage } from '../lib/usda';
 import { useStore, ThemeChoice } from '../store/useStore';
@@ -548,7 +549,8 @@ export function SettingsScreen() {
           opacity: 0.5,
           fontSize: 12,
         }}>
-        Kalorie v1.0.0 (Expo) • dane tylko na tym urządzeniu
+        Kalorie v{APP_VERSION} (build {BUILD_NUMBER}) • dane tylko na tym
+        urządzeniu
       </Text>
     </ScrollView>
   );

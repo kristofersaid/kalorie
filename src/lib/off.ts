@@ -128,7 +128,11 @@ async function fetchJson(url: string): Promise<unknown> {
     clearTimeout(t);
   }
   if (!res.ok) throw new Error(`OFF_HTTP_${res.status}`);
-  return await res.json();
+  try {
+    return await res.json();
+  } catch {
+    throw new Error('OFF_JSON');
+  }
 }
 
 /** Zamienia techniczny błąd OFF na czytelny komunikat po polsku. */
@@ -147,6 +151,9 @@ export function offErrorMessage(e: unknown): string {
       return 'Open Food Facts ograniczył zapytania (za dużo prób). Odczekaj minutę.';
     }
     return `Serwer Open Food Facts zwrócił błąd ${code}. Spróbuj później.`;
+  }
+  if (msg.includes('OFF_JSON')) {
+    return 'Serwer OFF zwrócił odpowiedź, której nie da się odczytać (zła sieć / przechwytywanie?). Spróbuj w innej sieci.';
   }
   return `Błąd wyszukiwania: ${msg}`;
 }

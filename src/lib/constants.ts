@@ -8,7 +8,9 @@ export const CATEGORIES = [
 ] as const;
 
 export const DEFAULT_KCAL_GOAL = 2000;
-export const DEFAULT_PROTEIN_GOAL = 150;
+export const APP_VERSION = '1.0.0';
+/** Numer buildu — podbijany przy każdej paczce poprawek (widoczny w Ustawieniach). */
+export const BUILD_NUMBER = '2026.09.06-1';export const DEFAULT_PROTEIN_GOAL = 150;
 export const DEFAULT_FAT_GOAL = 65;
 export const DEFAULT_CARBS_GOAL = 250;
 
