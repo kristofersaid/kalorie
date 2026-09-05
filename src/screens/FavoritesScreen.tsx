@@ -329,6 +329,7 @@ function ProductTile({
         kategoria: cat,
         dzien: todayKey(),
         zrodlo: SOURCE_API,
+        zdjecie: f.zdjecie ?? null,
       });
       setAdding(false);
       Alert.alert('Gotowe', `Dodano: ${f.nazwa}`);

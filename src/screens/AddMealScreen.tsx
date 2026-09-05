@@ -68,6 +68,7 @@ async function rememberProduct(p: {
   kod?: string | null;
   zdjecie?: string | null;
   opakowanieG?: number | null;
+  kategoria?: number;
 }): Promise<void> {
   try {
     const found = await searchFavorites(p.nazwa);
@@ -496,8 +497,10 @@ function SearchTab(p: {
         kategoria: p.category,
         dzien: p.day,
         zrodlo: SOURCE_API,
+        zdjecie: picked.zdjecie ?? null,
       });
-      await rememberProduct(picked);
+      // Dopisz wybraną kategorię — następnym razem wybierze się sama.
+      await rememberProduct({ ...picked, kategoria: p.category });
       p.onAdded();
     } catch {
       Alert.alert('Błąd', 'Nie udało się dodać posiłku.');

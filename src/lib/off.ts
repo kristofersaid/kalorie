@@ -14,6 +14,8 @@ export type OffProduct = {
   opakowanieG: number | null;
   /** Waga jednej porcji w gramach (z pola serving_size), jeśli podana. */
   porcjaG: number | null;
+  /** Kategoria z MOJEJ bazy (tylko dla wyników lokalnych). */
+  kategoria?: number | null;
 };
 
 function pickName(p: Record<string, unknown>): string {
@@ -185,6 +187,7 @@ export function offFromFavorite(f: FavoriteRow): OffProduct {
         ? Math.round(f.opakowanie_g)
         : null,
     porcjaG: null,
+    kategoria: f.kategoria,
   };
 }
 

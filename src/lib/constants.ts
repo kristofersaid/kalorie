@@ -70,8 +70,7 @@ Odpowiedz WYŁĄCZNIE czystym JSON (bez markdown, bez \`\`\`json):
 Jeśli nie widzisz jedzenia, zwróć:
 {"error": "Nie rozpoznano jedzenia na zdjęciu"}`;
 
-export function sourceLabel(s: string): string {
-  switch (s) {
+export function sourceLabel(s: string): string {  switch (s) {
     case SOURCE_AI:
       return 'AI';
     case SOURCE_API:
@@ -83,4 +82,14 @@ export function sourceLabel(s: string): string {
     default:
       return 'ręcznie';
   }
+}
+
+/** Bezpieczny indeks kategorii (fallback, gdy zapis jest spoza zakresu). */
+export function validCategory(i: unknown, fallback: number): number {
+  return typeof i === 'number' &&
+    Number.isInteger(i) &&
+    i >= 0 &&
+    i < CATEGORIES.length
+    ? i
+    : fallback;
 }

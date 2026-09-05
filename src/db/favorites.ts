@@ -26,7 +26,7 @@ export type FavoriteInput = {
   kod?: string | null;
   zdjecie?: string | null;
   ulubione?: boolean;
-  kategoria?: number;
+  kategoria?: number | null;
   opakowanieG?: number | null;
 };
 

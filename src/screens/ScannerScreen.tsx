@@ -15,7 +15,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { insertMeal } from '../db/meals';
 import { insertFavorite, searchFavorites } from '../db/favorites';
-import { CATEGORIES, SOURCE_BARCODE } from '../lib/constants';
+import { CATEGORIES, SOURCE_BARCODE, validCategory } from '../lib/constants';
 import { fmtKcal, scaleMacros, todayKey } from '../lib/format';
 import { OffProduct, offFromFavorite, productByBarcode } from '../lib/off';
 import { searchUsda } from '../lib/usda';
@@ -65,13 +65,17 @@ export function ScannerScreen() {
     setErr(null);
     setProduct(null);
     setSourceNote(null);
+    setCategory(defaultCategory());
     try {
       // 1) MOJA baza (offline), 2) Open Food Facts, 3) USDA FoodData.
       let offNetFail = false;
       let usdaNetFail = false;
       const local = await findLocalByBarcode(code).catch(() => null);
       if (local) {
-        setProduct(offFromFavorite(local));
+        const mapped = offFromFavorite(local);
+        setProduct(mapped);
+        // Parametry z bazy: kategoria (np. Mars → Przekąski).
+        setCategory(validCategory(mapped.kategoria, defaultCategory()));
         setSourceNote('📦 Znaleziono w MOJEJ bazie (offline)');
         setGrams(100);
         return;
@@ -135,6 +139,7 @@ export function ScannerScreen() {
         kategoria: category,
         dzien: todayKey(),
         zrodlo: SOURCE_BARCODE,
+        zdjecie: product.zdjecie ?? null,
       });
       try {
         const found = await searchFavorites(product.nazwa);
@@ -153,6 +158,8 @@ export function ScannerScreen() {
             zdjecie: product.zdjecie,
             ulubione: false,
             opakowanieG: product.opakowanieG,
+            // Zapamiętaj wybraną kategorię — następnym razem wybierze się sama.
+            kategoria: category,
           });
         }
       } catch {

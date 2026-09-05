@@ -31,6 +31,7 @@ import {
   toDouble,
 } from '../lib/format';
 import { OffProduct, offErrorMessage, offFromFavorite, productByBarcode } from '../lib/off';
+import { validCategory } from '../lib/constants';
 import { searchUsda } from '../lib/usda';
 import { useStore } from '../store/useStore';
 import { CategoryChips } from './CategoryChips';
@@ -45,6 +46,7 @@ async function rememberProduct(p: {
   kod?: string | null;
   zdjecie?: string | null;
   opakowanieG?: number | null;
+  kategoria?: number | null;
 }): Promise<void> {
   try {
     const found = await searchFavorites(p.nazwa);
@@ -141,8 +143,11 @@ export function SmartCapture({
           // Najpierw MOJA baza (offline), potem Open Food Facts.
           const local = await findLocalByBarcode(kind.kod).catch(() => null);
           if (local) {
+            const mapped = offFromFavorite(local);
+            // Parametry z bazy: kategoria (np. Mars → Przekąski).
+            setCategory(validCategory(mapped.kategoria, category));
             setGrams(100);
-            setPhase({ kind: 'barcode', product: offFromFavorite(local) });
+            setPhase({ kind: 'barcode', product: mapped });
             return;
           }
           const product = await productByBarcode(kind.kod).catch(() => null);
@@ -252,8 +257,12 @@ export function SmartCapture({
         kategoria: category,
         dzien: day,
         zrodlo: 'kod',
+        zdjecie: product.zdjecie ?? null,
       });
-      await rememberProduct(product);
+      await rememberProduct({
+        ...product,
+        kategoria: product.kategoria ?? category,
+      });
       finish(`Dodano: ${product.nazwa}`);
     } catch {
       fail('Nie udało się dodać posiłku.');
@@ -298,6 +307,7 @@ export function SmartCapture({
         tluszcze100: toDouble(lt),
         wegle100: toDouble(lw),
         opakowanieG: opakG,
+        kategoria: category,
       });
       finish(`Dodano: ${lname}`);
     } catch {
@@ -318,6 +328,7 @@ export function SmartCapture({
         tluszcze100: toDouble(lt),
         wegle100: toDouble(lw),
         opakowanieG: opakG,
+        kategoria: category,
       });
       finish(`Zapisano w bazie: ${lname}`);
     } catch {
