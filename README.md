@@ -1,98 +1,69 @@
-# Kalorie 🥗 – wersja Expo (React Native + TypeScript)
+# 🥗 Kalorie
 
-Prywatna aplikacja do liczenia kalorii. Te same funkcje co wersja Flutter,
-ale **bez instalowania Flutter ani Android Studio** – wystarczy Node.js
-(masz już v24) i telefon z aplikacją **Expo Go**.
+Prywatna aplikacja mobilna do liczenia kalorii — **Expo (React Native + TypeScript), SDK 57**.
 
-- **Expo SDK 57**, React 19, React Native 0.86, TypeScript 6.
-- Dane lokalnie na telefonie (SQLite przez `expo-sqlite`).
-- Internet tylko do: Gemini 1.5 Flash (zdjęcia AI) i Open Food Facts
-  (wyszukiwanie + kody kreskowe). Bez sieci wszystko inne działa offline.
-- Zero kont, zero logowania.
+Zero kont, zero logowania, zero analityki. Wszystkie dane na telefonie (SQLite).
+Internet używany wyłącznie do AI (rozpoznawanie jedzenia ze zdjęć) oraz
+Open Food Facts (wyszukiwanie produktów i kody kreskowe).
 
-## 1. Uruchomienie deweloperskie (2 minuty)
+## ✨ Funkcje
+
+| Obszar | Co potrafi |
+|---|---|
+| 🏠 Dashboard | Powitanie, ring kcal vs cel, słupki białko/tłuszcze/węgle, posiłki w kategoriach: Śniadanie, Lunch, Obiad, Kolacja, Przekąski, **Napoje** |
+| ➕ Dodawanie | 4 sposoby: **ręcznie** (ze zdjęciem), **wyszukiwarka** (baza lokalna + Open Food Facts), **zdjęcie posiłku** (AI), **zdjęcie etykiety** (AI odczytuje tabelę na 100 g) |
+| 📷 Skaner EAN | Kod kreskowy → produkt z OFF → gramatura / **całe opakowanie** / porcja; przy braku kodu: szukaj po nazwie, etykieta AI lub ręcznie |
+| 🤖 AI | 5 dostawców do wyboru: Google Gemini, OpenAI, xAI Grok, Anthropic Claude, OpenRouter (własny klucz + model) |
+| 📅 Historia | Polski kalendarz z kropkami 🟢 poniżej / 🟡 w normie / 🔴 powyżej celu, edycja i usuwanie wpisów |
+| 📊 Statystyki | Wykres kcal 7/14/30 dni, średnie makro, top 5 produktów |
+| ⭐ Ulubione | Produkty z gwiazdkami (ze zdjęciami) + **szablony posiłków złożonych** (np. „Moja owsianka”) |
+| ⚙️ Ustawienia | Cele kcal/makro, klucz AI, model AI, motyw, eksport/import CSV, test połączenia, czyszczenie danych |
+
+## 🚀 Szybki start (Expo Go)
 
 ```powershell
-cd kalorie_expo
-npm install          # jednorazowo (u Ciebie już wykonane ✔)
+npm install
 npx expo start
 ```
 
-1. Na telefonie zainstaluj **Expo Go** (Sklep Play / App Store).
-2. Telefon i komputer w **tej samej sieci Wi-Fi**.
-3. Zeskanuj kod QR z terminala aplikacją Expo Go.
-4. Aplikacja otworzy się na telefonie. Gotowe.
-
-> Jeśli QR nie łączy (np. firmowy firewall), użyj tunelu:
-> `npx expo start --tunnel`
-
-Sprawdzenie typów w każdej chwili:
+Zeskanuj QR aplikacją **Expo Go** (telefon i komputer w tej samej sieci Wi-Fi
+— inaczej `npx expo start --tunnel`). W aplikacji: Ustawienia → dostawca AI →
+klucz API → liczysz kalorie.
 
 ```powershell
-npx tsc --noEmit
+npx tsc --noEmit   # kontrola typów
 ```
 
-## 2. Pierwsze kroki w aplikacji
-
-1. Zakładka **Ustawienia** → sekcja **Sztuczna inteligencja** → wybierz
-   dostawcę (Google Gemini, OpenAI, xAI Grok, Anthropic Claude lub
-   OpenRouter), wklej **klucz API** i zapisz. Model możesz zostawić
-   domyślny albo wpisać własny.
-2. Ustaw cel kcal i makro (domyślnie 2000 kcal, B 150 g, T 65 g, W 250 g).
-3. Ekran główny → **+ Dodaj**.
-
-## 3. Instalacja APK na stałe (bez Expo Go)
-
-Expo Go wymaga działającego `npx expo start` na komputerze. Żeby mieć
-samodzielną aplikację offline, zbuduj APK **w chmurze** (EAS Build –
-kompilacja odbywa się na serwerach Expo, nic nie instalujesz).
-Plik `eas.json` z profilem `preview` (APK) jest już przygotowany.
+## 📦 Build APK (chmura EAS)
 
 ```powershell
-npm install -g eas-cli   # u Ciebie już wykonane ✔
-eas login                # darmowe konto Expo (załuż na expo.dev)
+npm install -g eas-cli
+eas login
 eas build -p android --profile preview
 ```
 
-Po kilkunastu minutach dostaniesz link do pliku `.apk` – instalujesz na
-telefonie i działa samodzielnie (internet potrzebny tylko do AI i OFF).
+Gotowy `.apk` instalujesz na wierzch poprzedniego (dane zostają).
+Profil `preview` daje APK; `production` daje `.aab` do Sklepu Play.
 
-## 4. Struktura kodu
+## 🗂 Struktura
 
 ```
 src/
-├── App.tsx               # nawigacja (4 zakładki + modal + skaner + statystyki)
-├── nav.ts                # typy tras
-├── lib/                  # constants, format (polskie daty), off.ts, gemini.ts, csv.ts
-├── db/                   # SQLite: database.ts, meals.ts, favorites.ts, templates.ts, stats.ts
-├── store/useStore.ts     # ustawienia + motyw (zustand, persist w AsyncStorage)
-├── components/           # CalorieRing (SVG), MacroBar, MealCard, CategorySection,
-│                         # PortionPicker, CategoryChips
-└── screens/              # Dashboard, AddMeal (ręcznie/szukaj/zdjęcie/etykieta), Scanner,
-                          # History (kalendarz PL), Stats (wykresy), Favorites, Settings
+├── App.tsx            # nawigacja: 4 zakładki + modal + skaner + statystyki
+├── lib/               # ai.ts (5 dostawców), off.ts, gemini prompt, csv, format, photo
+├── db/                # expo-sqlite: meals, favorites, templates, stats
+├── store/             # zustand + persist (cele, klucze AI, motyw)
+├── components/        # ring kcal (SVG), słupki makro, karty, porcje, chipy
+└── screens/           # 7 ekranów
 ```
 
-## 5. Różnice względem wersji Flutter
+## 🔒 Prywatność
 
-| Temat | Flutter | Expo (to) |
-|---|---|---|
-| Baza | Drift (kod generowany) | `expo-sqlite`, czysty SQL, zero generowania |
-| Stan | Riverpod | zustand + persist |
-| Skaner | `mobile_scanner` | `expo-camera` (wbudowane skanowanie EAN + chipy „Całe opakowanie” / „1 porcja” z danych OFF) |
-| Zdjęcia | `image_picker` + pakiet `google_generative_ai` | `expo-image-picker` + bezpośredni REST do Gemini |
-| Wykresy | fl_chart | react-native-chart-kit |
-| Kalendarz | table_calendar | react-native-calendars (locale PL) |
-| CSV | `csv` + `share_plus` | własny parser + `expo-sharing` / `expo-document-picker` (pliki CSV przez `expo-file-system/legacy`) |
+- Posiłki, ulubione, szablony → SQLite na urządzeniu. Ustawienia i klucze → AsyncStorage.
+- Sieć: tylko `generativelanguage.googleapis.com` / API wybranego dostawcy AI
+  (zdjęcia) oraz `world.openfoodfacts.org` (produkty).
+- Poza telefon nic nie wychodzi. Eksport historii do CSV w Ustawieniach.
 
-Prompt do Gemini, endpointy Open Food Facts i cała logika (kategorie,
-źródła wpisów, statusy dnia 🟢🟡🔴, przeliczanie makro) – 1:1 jak w specyfikacji.
+## 🛠 Wymagania
 
-## 6. Najczęstsze problemy
-
-| Problem | Rozwiązanie |
-|---|---|
-| QR nie łączy | ta sama sieć Wi-Fi albo `npx expo start --tunnel` |
-| Aparat nie działa | testuj na fizycznym telefonie, nie na emulatorze |
-| `Brak klucza API Gemini` | wklej klucz w Ustawieniach |
-| Błąd wersji paczek | `npx expo install --fix` |
-| Import CSV nic nie znajduje | wybierz plik `.csv` wyeksportowany z aplikacji |
+Node.js 20+, telefon z Expo Go (dev) lub APK z EAS (docelowo).
