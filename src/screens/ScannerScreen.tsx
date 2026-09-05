@@ -19,9 +19,11 @@ import { CATEGORIES, SOURCE_BARCODE } from '../lib/constants';
 import { fmtKcal, scaleMacros, todayKey } from '../lib/format';
 import { OffProduct, productByBarcode } from '../lib/off';
 import { RootStackParamList } from '../nav';
-import { useStore } from '../store/useStore';
+import { aiConfigOf, useStore } from '../store/useStore';
+import { AiConfig } from '../lib/ai';
 import { CategoryChips } from '../components/CategoryChips';
 import { PortionPicker } from '../components/PortionPicker';
+import { SmartCapture } from '../components/SmartCapture';
 
 function defaultCategory(): number {
   const h = new Date().getHours();
@@ -36,6 +38,14 @@ export function ScannerScreen() {
   const { colors } = useTheme();
   const nav = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const bump = useStore((s) => s.bump);
+  const aiCfg: AiConfig = aiConfigOf({
+    aiProvider: useStore((s) => s.aiProvider),
+    aiKeys: useStore((s) => s.aiKeys),
+    aiModels: useStore((s) => s.aiModels),
+    apiKey: useStore((s) => s.apiKey),
+  });
+  const [mode, setMode] = useState<'live' | 'photo'>('live');
+  const [photoCat, setPhotoCat] = useState(defaultCategory());
   const [permission, requestPermission] = useCameraPermissions();
   const [fetching, setFetching] = useState(false);
   const [product, setProduct] = useState<OffProduct | null>(null);
@@ -165,7 +175,50 @@ export function ScannerScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      {!product && !err && (
+      <View style={{ flexDirection: 'row', padding: 10, gap: 8 }}>
+        {(
+          [
+            ['live', '🔖 Skan na żywo'],
+            ['photo', '✨ Zdjęcie AI'],
+          ] as ['live' | 'photo', string][]
+        ).map(([m, label]) => (
+          <TouchableOpacity
+            key={m}
+            onPress={() => setMode(m)}
+            style={{
+              flex: 1,
+              padding: 10,
+              borderRadius: 10,
+              alignItems: 'center',
+              backgroundColor: mode === m ? colors.primary : colors.card,
+              borderWidth: 1,
+              borderColor: colors.border,
+            }}>
+            <Text
+              style={{
+                color: mode === m ? '#fff' : colors.text,
+                fontWeight: '700',
+              }}>
+              {label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      {mode === 'photo' ? (
+        <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+          <SmartCapture
+            cfg={aiCfg}
+            day={todayKey()}
+            category={photoCat}
+            setCategory={setPhotoCat}
+            showAdd
+            showSaveProduct={false}
+            showSaveDish={false}
+          />
+        </ScrollView>
+      ) : (
+        <>
+          {!product && !err && (
         <View style={{ flex: 1 }}>
           <CameraView
             style={{ flex: 1 }}
@@ -370,6 +423,8 @@ export function ScannerScreen() {
             {CATEGORIES[category]} • dziś
           </Text>
         </ScrollView>
+      )}
+        </>
       )}
     </View>
   );

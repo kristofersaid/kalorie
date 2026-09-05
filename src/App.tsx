@@ -13,9 +13,11 @@ import { useStore } from './store/useStore';
 import { RootStackParamList, TabParamList } from './nav';
 import { DashboardScreen } from './screens/DashboardScreen';
 import { HistoryScreen } from './screens/HistoryScreen';
+import { BazaScreen } from './screens/BazaScreen';
 import { FavoritesScreen } from './screens/FavoritesScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { AddMealScreen } from './screens/AddMealScreen';
+import { CreatorScreen } from './screens/CreatorScreen';
 import { ScannerScreen } from './screens/ScannerScreen';
 import { StatsScreen } from './screens/StatsScreen';
 
@@ -25,6 +27,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const ICONS: Record<string, string> = {
   Start: '🏠',
   Historia: '📅',
+  Baza: '🗄️',
   Ulubione: '⭐',
   Ustawienia: '⚙️',
 };
@@ -42,6 +45,11 @@ function Tabs() {
         options={{ title: 'Kalorie' }}
       />
       <Tab.Screen name="Historia" component={HistoryScreen} />
+      <Tab.Screen
+        name="Baza"
+        component={BazaScreen}
+        options={{ title: 'Moja baza' }}
+      />
       <Tab.Screen name="Ulubione" component={FavoritesScreen} />
       <Tab.Screen name="Ustawienia" component={SettingsScreen} />
     </Tab.Navigator>
@@ -101,6 +109,11 @@ export default function App() {
           name="AddMeal"
           component={AddMealScreen}
           options={{ title: 'Dodaj posiłek', presentation: 'modal' }}
+        />
+        <Stack.Screen
+          name="Creator"
+          component={CreatorScreen}
+          options={{ title: 'Moja baza: nowy wpis', presentation: 'modal' }}
         />
         <Stack.Screen
           name="Scanner"

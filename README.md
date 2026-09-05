@@ -12,7 +12,8 @@ Open Food Facts (wyszukiwanie produktów i kody kreskowe).
 |---|---|
 | 🏠 Dashboard | Powitanie, ring kcal vs cel, słupki białko/tłuszcze/węgle, posiłki w kategoriach: Śniadanie, Lunch, Obiad, Kolacja, Przekąski, **Napoje** |
 | ➕ Dodawanie | 4 sposoby: **ręcznie** (ze zdjęciem), **wyszukiwarka** (baza lokalna + Open Food Facts), **zdjęcie posiłku** (AI), **zdjęcie etykiety** (AI odczytuje tabelę na 100 g) |
-| 📷 Skaner EAN | Kod kreskowy → produkt z OFF → gramatura / **całe opakowanie** / porcja; przy braku kodu: szukaj po nazwie, etykieta AI lub ręcznie |
+| 📷 Skaner EAN | Kod kreskowy → produkt z OFF → gramatura / **całe opakowanie** / porcja; tryb **Zdjęcie AI** (jedno zdjęcie → routing kod/etykieta/posiłek); przy braku kodu: szukaj po nazwie, etykieta AI lub ręcznie |
+| 🗄️ Baza | **Moje produkty i dania** (lokalnie): szybkie dodawanie z gramaturą + kreator (ręcznie / kod / etykieta AI / zdjęcie AI dania) |
 | 🤖 AI | 5 dostawców do wyboru: Google Gemini, OpenAI, xAI Grok, Anthropic Claude, OpenRouter (własny klucz + model) |
 | 📅 Historia | Polski kalendarz z kropkami 🟢 poniżej / 🟡 w normie / 🔴 powyżej celu, edycja i usuwanie wpisów |
 | 📊 Statystyki | Wykres kcal 7/14/30 dni, średnie makro, top 5 produktów |
@@ -49,12 +50,13 @@ Profil `preview` daje APK; `production` daje `.aab` do Sklepu Play.
 
 ```
 src/
-├── App.tsx            # nawigacja: 4 zakładki + modal + skaner + statystyki
-├── lib/               # ai.ts (5 dostawców), off.ts, gemini prompt, csv, format, photo
+├── App.tsx            # nawigacja: 5 zakładek + modale + skaner + statystyki
+├── lib/               # ai.ts (5 dostawców + klasyfikator zdjęć), off.ts, csv, format, photo
 ├── db/                # expo-sqlite: meals, favorites, templates, stats
 ├── store/             # zustand + persist (cele, klucze AI, motyw)
-├── components/        # ring kcal (SVG), słupki makro, karty, porcje, chipy
-└── screens/           # 7 ekranów
+├── components/        # ring kcal (SVG), słupki makro, karty, porcje, chipy,
+│                      # SmartCapture, ProductForm, TemplateForm
+└── screens/           # 9 ekranów
 ```
 
 ## 🔒 Prywatność

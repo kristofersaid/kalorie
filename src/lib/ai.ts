@@ -597,3 +597,46 @@ export async function analyzeLabel(
     opakowanieG: posOrNull(obj['opakowanie_g']),
   };
 }
+
+const CLASSIFY_PROMPT = `Jesteś klasyfikatorem zdjęć. Określ, co widać na zdjęciu.
+Odpowiedz WYŁĄCZNIE czystym JSON (bez markdown, bez \`\`\`json), w jednym z formatów:
+{"type":"kod","kod":"5901234567890"} — gdy widać kod kreskowy (przepisz dokładnie wszystkie cyfry)
+{"type":"etykieta"} — gdy widać tabelę wartości odżywczych na opakowaniu
+{"type":"posilek"} — gdy widać gotowy posiłek, jedzenie lub danie
+{"type":"brak"} — w przeciwnym razie`;
+
+export type PhotoKind =
+  | { type: 'kod'; kod: string }
+  | { type: 'etykieta' }
+  | { type: 'posilek' }
+  | { type: 'brak'; error?: string };
+
+/**
+ * Klasyfikuje zdjęcie: kod kreskowy / etykieta / posiłek / brak.
+ * Używane przez inteligentny aparat (jedno zdjęcie → właściwa akcja).
+ */
+export async function classifyPhoto(
+  cfg: AiConfig,
+  base64: string,
+  mimeType = 'image/jpeg',
+): Promise<PhotoKind> {
+  const r = await aiText(cfg, base64, CLASSIFY_PROMPT, mimeType);
+  if (r.error || !r.text) return { type: 'brak', error: r.error };
+  const obj = parseJsonObject(r.text);
+  if (!obj || typeof obj['type'] !== 'string') {
+    return { type: 'brak', error: 'Nie udało się rozpoznać zdjęcia.' };
+  }
+  switch (obj['type']) {
+    case 'kod': {
+      const digits = String(obj['kod'] ?? '').replace(/\D/g, '');
+      if (/^\d{8,14}$/.test(digits)) return { type: 'kod', kod: digits };
+      return { type: 'brak', error: 'Widać kod, ale nie odczytano cyfr.' };
+    }
+    case 'etykieta':
+      return { type: 'etykieta' };
+    case 'posilek':
+      return { type: 'posilek' };
+    default:
+      return { type: 'brak', error: 'Nie rozpoznano jedzenia na zdjęciu.' };
+  }
+}
