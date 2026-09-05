@@ -19,6 +19,7 @@ Open Food Facts (wyszukiwanie produktów i kody kreskowe).
 | 📅 Historia | Polski kalendarz z kropkami 🟢 poniżej / 🟡 w normie / 🔴 powyżej celu, edycja i usuwanie wpisów |
 | 📊 Statystyki | Wykres kcal 7/14/30 dni, średnie makro, top 5 produktów |
 | ⭐ Ulubione | Produkty z gwiazdkami (ze zdjęciami) + **szablony posiłków złożonych** (np. „Moja owsianka”) |
+| 🏃 Aktywność | Treningi (typ + czas + dystans → kcal z MET i wagi) albo same kcal; bilans netto na dashboardzie, historii i statystykach |
 | ⚙️ Ustawienia | Cele kcal/makro, klucz AI, model AI, motyw, eksport/import CSV, test połączenia, czyszczenie danych |
 
 ## 🚀 Szybki start (Expo Go)

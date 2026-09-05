@@ -17,6 +17,7 @@ import { BazaScreen } from './screens/BazaScreen';
 import { FavoritesScreen } from './screens/FavoritesScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { AddMealScreen } from './screens/AddMealScreen';
+import { ActivityScreen } from './screens/ActivityScreen';
 import { CreatorScreen } from './screens/CreatorScreen';
 import { ScannerScreen } from './screens/ScannerScreen';
 import { StatsScreen } from './screens/StatsScreen';
@@ -114,6 +115,11 @@ export default function App() {
           name="Creator"
           component={CreatorScreen}
           options={{ title: 'Moja baza: nowy wpis', presentation: 'modal' }}
+        />
+        <Stack.Screen
+          name="Activity"
+          component={ActivityScreen}
+          options={{ title: 'Aktywność', presentation: 'modal' }}
         />
         <Stack.Screen
           name="Scanner"

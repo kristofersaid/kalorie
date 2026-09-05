@@ -12,10 +12,12 @@ import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CATEGORIES } from '../lib/constants';
 import { groupByCategory, mealsByDay, deleteMeal, totalsOf } from '../db/meals';
-import { MealRow } from '../db/database';
-import { prettyDate, todayKey } from '../lib/format';
+import { activitiesByDay, burnedOf, deleteActivity } from '../db/activities';
+import { ActivityRow, MealRow } from '../db/database';
+import { fmtKcal, prettyDate, todayKey } from '../lib/format';
 import { useStore } from '../store/useStore';
 import { RootStackParamList, TabParamList } from '../nav';
+import { ActivityCard } from '../components/ActivityCard';
 import { CalorieRing } from '../components/CalorieRing';
 import { MacroBar } from '../components/MacroBar';
 import { CategorySection } from '../components/CategorySection';
@@ -41,13 +43,19 @@ export function DashboardScreen({ navigation }: Props) {
   const fatGoal = useStore((s) => s.fatGoal);
   const carbsGoal = useStore((s) => s.carbsGoal);
   const [meals, setMeals] = useState<MealRow[]>([]);
+  const [acts, setActs] = useState<ActivityRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = React.useCallback(async () => {
     try {
-      setMeals(await mealsByDay(todayKey()));
+      const [m, a] = await Promise.all([
+        mealsByDay(todayKey()),
+        activitiesByDay(todayKey()),
+      ]);
+      setMeals(m);
+      setActs(a);
     } catch {
-      Alert.alert('Błąd', 'Nie udało się wczytać posiłków.');
+      Alert.alert('Błąd', 'Nie udało się wczytać danych.');
     } finally {
       setLoading(false);
     }
@@ -81,6 +89,8 @@ export function DashboardScreen({ navigation }: Props) {
 
   const totals = totalsOf(meals);
   const groups = groupByCategory(meals);
+  const burned = burnedOf(acts);
+  const netto = totals.kcal - burned;
 
   const confirmDelete = (m: MealRow) => {
     Alert.alert('Usunąć wpis?', `„${m.nazwa}” zostanie trwale usunięty.`, [
@@ -95,6 +105,25 @@ export function DashboardScreen({ navigation }: Props) {
             load();
           } catch {
             Alert.alert('Błąd', 'Nie udało się usunąć wpisu.');
+          }
+        },
+      },
+    ]);
+  };
+
+  const confirmDeleteActivity = (a: ActivityRow) => {
+    Alert.alert('Usunąć aktywność?', `„${a.nazwa}” zostanie usunięta.`, [
+      { text: 'Anuluj', style: 'cancel' },
+      {
+        text: 'Usuń',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await deleteActivity(a.id);
+            bump();
+            load();
+          } catch {
+            Alert.alert('Błąd', 'Nie udało się usunąć aktywności.');
           }
         },
       },
@@ -144,7 +173,63 @@ export function DashboardScreen({ navigation }: Props) {
               />
             </>
           )}
+          {!loading && (
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginTop: 12,
+              }}>
+              <Text style={{ color: colors.text, fontWeight: '600' }}>
+                Bilans (netto): {fmtKcal(netto)}
+                {burned > 0 ? `  •  spalono ${fmtKcal(burned)}` : ''}
+              </Text>
+            </View>
+          )}
         </View>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginTop: 16,
+          }}>
+          <Text
+            style={{ fontSize: 17, fontWeight: '800', color: colors.text }}>
+            🏃 Aktywność
+            {burned > 0 ? ` (−${fmtKcal(burned)})` : ''}
+          </Text>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate('Activity', { day: todayKey() })
+            }
+            style={{
+              backgroundColor: '#2e7d32',
+              borderRadius: 16,
+              paddingVertical: 6,
+              paddingHorizontal: 14,
+            }}>
+            <Text style={{ color: '#fff', fontWeight: '700' }}>
+              + Trening
+            </Text>
+          </TouchableOpacity>
+        </View>
+        {!loading &&
+          acts.map((a) => (
+            <View key={`a${a.id}`} style={{ marginTop: 8 }}>
+              <ActivityCard
+                activity={a}
+                onEdit={() =>
+                  navigation.navigate('Activity', {
+                    day: a.dzien,
+                    activityId: a.id,
+                  })
+                }
+                onDelete={() => confirmDeleteActivity(a)}
+              />
+            </View>
+          ))}
         {groups.map((g, i) => (
           <CategorySection
             key={CATEGORIES[i]}

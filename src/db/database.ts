@@ -52,6 +52,22 @@ export type TemplateItemRow = {
   wegle: number;
 };
 
+export type ActivityRow = {
+  id: number;
+  /** Np. „Bieganie”, „Jazda na rowerze”, „Aktywność”. */
+  nazwa: string;
+  /** Spalone kcal (wyliczone lub wpisane). */
+  kcal: number;
+  /** Czas w minutach (0 gdy nie podano). */
+  czas_min: number;
+  /** Dystans w km (0 gdy nie podano). */
+  dystans_km: number;
+  /** Dzień jako 'yyyy-MM-dd'. */
+  dzien: string;
+  /** ISO string momentu dodania. */
+  created_at: string;
+};
+
 let db: SQLite.SQLiteDatabase | null = null;
 let initDone = false;
 
@@ -105,6 +121,16 @@ export async function getDb(): Promise<SQLite.SQLiteDatabase> {
         tluszcze REAL NOT NULL DEFAULT 0,
         wegle REAL NOT NULL DEFAULT 0
       );
+      CREATE TABLE IF NOT EXISTS activities (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nazwa TEXT NOT NULL,
+        kcal REAL NOT NULL DEFAULT 0,
+        czas_min REAL NOT NULL DEFAULT 0,
+        dystans_km REAL NOT NULL DEFAULT 0,
+        dzien TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_activities_dzien ON activities (dzien);
     `);
     // Migracja dla baz utworzonych przed v1.1: kolumna na zdjęcie posiłku.
     try {

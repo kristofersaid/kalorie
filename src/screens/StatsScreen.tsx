@@ -9,8 +9,7 @@ import {
 } from 'react-native';
 import { useTheme, useFocusEffect } from '@react-navigation/native';
 import { BarChart, LineChart } from 'react-native-chart-kit';
-import { averages, dailyTotals, DayTotal, topProducts } from '../db/stats';
-import { Totals } from '../db/meals';
+import { averages, dailyTotals, Averages, DayTotal, topProducts } from '../db/stats';
 import { fmtG, fmtKcal, shortDate } from '../lib/format';
 import { useStore } from '../store/useStore';
 
@@ -25,8 +24,8 @@ export function StatsScreen() {
   const carbsGoal = useStore((s) => s.carbsGoal);
   const [range, setRange] = useState(7);
   const [daily, setDaily] = useState<DayTotal[]>([]);
-  const [avg7, setAvg7] = useState<Totals | null>(null);
-  const [avgR, setAvgR] = useState<Totals | null>(null);
+  const [avg7, setAvg7] = useState<Averages | null>(null);
+  const [avgR, setAvgR] = useState<Averages | null>(null);
   const [top, setTop] = useState<{ nazwa: string; razy: number }[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -133,8 +132,16 @@ export function StatsScreen() {
                   withDots: false,
                   color: () => '#e53935',
                 },
+                {
+                  data:
+                    daily.length > 0
+                      ? daily.map((d) => Math.round(d.spalone))
+                      : [0],
+                  withDots: false,
+                  color: () => '#2e7d32',
+                },
               ],
-              legend: ['kcal', 'cel'],
+              legend: ['kcal', 'cel', 'spalone'],
             }}
             width={W - 16}
             height={220}
@@ -207,6 +214,8 @@ export function StatsScreen() {
               Średnie dzienne z ostatnich {range} dni:
             </Text>
             <Row label="Kalorie" value={fmtKcal(avgR.kcal)} />
+            <Row label="Spalone (treningi)" value={`−${fmtKcal(avgR.spalone)}`} />
+            <Row label="Bilans netto" value={fmtKcal(avgR.kcal - avgR.spalone)} />
             <Row label="Białko" value={fmtG(avgR.bialko)} />
             <Row label="Tłuszcze" value={fmtG(avgR.tluszcze)} />
             <Row label="Węglowodany" value={fmtG(avgR.wegle)} />

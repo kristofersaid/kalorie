@@ -42,6 +42,8 @@ type SettingsState = {
   proteinGoal: number;
   fatGoal: number;
   carbsGoal: number;
+  /** Waga ciała w kg (do wyliczania spalonych kcal). */
+  weightKg: number;
   /** Klucz Google (starsze pole, dla zgodności wstecznej). */
   apiKey: string;
   aiProvider: AiProviderId;
@@ -52,6 +54,7 @@ type SettingsState = {
   tick: number;
   hydrated: boolean;
   setGoals: (g: Goals) => void;
+  setWeight: (kg: number) => void;
   setApiKey: (key: string) => void;
   setAiProvider: (p: AiProviderId) => void;
   setAiKey: (p: AiProviderId, key: string) => void;
@@ -87,6 +90,7 @@ export const useStore = create<SettingsState>()(
       proteinGoal: DEFAULT_PROTEIN_GOAL,
       fatGoal: DEFAULT_FAT_GOAL,
       carbsGoal: DEFAULT_CARBS_GOAL,
+      weightKg: 70,
       apiKey: '',
       aiProvider: 'google',
       aiKeys: emptyKeys(),
@@ -101,6 +105,7 @@ export const useStore = create<SettingsState>()(
           fatGoal: g.fat,
           carbsGoal: g.carbs,
         }),
+      setWeight: (kg) => set({ weightKg: kg }),
       setApiKey: (key) => set({ apiKey: key.trim() }),
       setAiProvider: (p) => set({ aiProvider: p }),
       setAiKey: (p, key) =>
@@ -118,6 +123,7 @@ export const useStore = create<SettingsState>()(
         proteinGoal: s.proteinGoal,
         fatGoal: s.fatGoal,
         carbsGoal: s.carbsGoal,
+        weightKg: s.weightKg ?? 70,
         apiKey: s.apiKey,
         aiProvider: s.aiProvider,
         aiKeys: { ...emptyKeys(), ...(s.aiKeys ?? {}) },

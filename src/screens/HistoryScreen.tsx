@@ -13,11 +13,13 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import { CATEGORIES } from '../lib/constants';
 import { groupByCategory, mealsByDay, deleteMeal } from '../db/meals';
+import { activitiesByDay, burnedOf, deleteActivity } from '../db/activities';
 import { monthKcal } from '../db/stats';
-import { MealRow } from '../db/database';
+import { ActivityRow, MealRow } from '../db/database';
 import { fmtKcal, parseDayKey, prettyDate, todayKey } from '../lib/format';
 import { useStore } from '../store/useStore';
 import { RootStackParamList, TabParamList } from '../nav';
+import { ActivityCard } from '../components/ActivityCard';
 import { CategorySection } from '../components/CategorySection';
 
 LocaleConfig.locales['pl'] = {
@@ -54,6 +56,7 @@ export function HistoryScreen({ navigation }: Props) {
   });
   const [dots, setDots] = useState<Record<string, number>>({});
   const [meals, setMeals] = useState<MealRow[]>([]);
+  const [acts, setActs] = useState<ActivityRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadMonth = React.useCallback(async () => {
@@ -66,7 +69,12 @@ export function HistoryScreen({ navigation }: Props) {
 
   const loadDay = React.useCallback(async () => {
     try {
-      setMeals(await mealsByDay(selected));
+      const [m, a] = await Promise.all([
+        mealsByDay(selected),
+        activitiesByDay(selected),
+      ]);
+      setMeals(m);
+      setActs(a);
     } catch {
       Alert.alert('Błąd', 'Nie udało się wczytać posiłków.');
     } finally {
@@ -101,6 +109,7 @@ export function HistoryScreen({ navigation }: Props) {
 
   const groups = groupByCategory(meals);
   const dayKcal = meals.reduce((s, m) => s + m.kcal, 0);
+  const dayBurned = burnedOf(acts);
 
   const confirmDelete = (m: MealRow) => {
     Alert.alert('Usunąć wpis?', `„${m.nazwa}” zostanie trwale usunięty.`, [
@@ -116,6 +125,26 @@ export function HistoryScreen({ navigation }: Props) {
             loadMonth();
           } catch {
             Alert.alert('Błąd', 'Nie udało się usunąć wpisu.');
+          }
+        },
+      },
+    ]);
+  };
+
+  const confirmDeleteActivity = (a: ActivityRow) => {
+    Alert.alert('Usunąć aktywność?', `„${a.nazwa}” zostanie usunięta.`, [
+      { text: 'Anuluj', style: 'cancel' },
+      {
+        text: 'Usuń',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await deleteActivity(a.id);
+            bump();
+            loadDay();
+            loadMonth();
+          } catch {
+            Alert.alert('Błąd', 'Nie udało się usunąć aktywności.');
           }
         },
       },
@@ -191,28 +220,60 @@ export function HistoryScreen({ navigation }: Props) {
         </View>
         {loading ? (
           <ActivityIndicator style={{ marginTop: 24 }} />
-        ) : meals.length === 0 ? (
-          <Text
-            style={{
-              textAlign: 'center',
-              color: colors.text,
-              opacity: 0.6,
-              marginTop: 24,
-            }}>
-            Brak posiłków tego dnia.
-          </Text>
         ) : (
-          groups.map((g, i) => (
-            <CategorySection
-              key={CATEGORIES[i]}
-              title={CATEGORIES[i]}
-              meals={g}
-              onEdit={(m) =>
-                navigation.navigate('AddMeal', { day: m.dzien, mealId: m.id })
-              }
-              onDelete={confirmDelete}
-            />
-          ))
+          <>
+            {dayBurned > 0 && (
+              <Text
+                style={{
+                  color: '#2e7d32',
+                  fontWeight: '700',
+                  marginTop: 8,
+                }}>
+                🏃 Spalono tego dnia: −{fmtKcal(dayBurned)} (netto:{' '}
+                {fmtKcal(dayKcal - dayBurned)})
+              </Text>
+            )}
+            {acts.map((a) => (
+              <View key={`a${a.id}`} style={{ marginTop: 8 }}>
+                <ActivityCard
+                  activity={a}
+                  onEdit={() =>
+                    navigation.navigate('Activity', {
+                      day: a.dzien,
+                      activityId: a.id,
+                    })
+                  }
+                  onDelete={() => confirmDeleteActivity(a)}
+                />
+              </View>
+            ))}
+            {meals.length === 0 && acts.length === 0 ? (
+              <Text
+                style={{
+                  textAlign: 'center',
+                  color: colors.text,
+                  opacity: 0.6,
+                  marginTop: 24,
+                }}>
+                Brak posiłków tego dnia.
+              </Text>
+            ) : (
+              groups.map((g, i) => (
+                <CategorySection
+                  key={CATEGORIES[i]}
+                  title={CATEGORIES[i]}
+                  meals={g}
+                  onEdit={(m) =>
+                    navigation.navigate('AddMeal', {
+                      day: m.dzien,
+                      mealId: m.id,
+                    })
+                  }
+                  onDelete={confirmDelete}
+                />
+              ))
+            )}
+          </>
         )}
       </ScrollView>
       <TouchableOpacity

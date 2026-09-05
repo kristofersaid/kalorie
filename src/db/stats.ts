@@ -1,7 +1,10 @@
 import { mealsBetween, allMeals, Totals } from './meals';
+import { activitiesBetween } from './activities';
 import { dayKey, parseDayKey } from '../lib/format';
 
-export type DayTotal = Totals & { key: string; date: Date };
+export type DayTotal = Totals & { key: string; date: Date; spalone: number };
+
+export type Averages = Totals & { spalone: number };
 
 /** Sumy dzienne dla ostatnich `days` dni (włącznie z dziś). */
 export async function dailyTotals(days: number): Promise<DayTotal[]> {
@@ -12,6 +15,11 @@ export async function dailyTotals(days: number): Promise<DayTotal[]> {
     today.getDate() - (days - 1),
   );
   const rows = await mealsBetween(dayKey(from), dayKey(today));
+  const acts = await activitiesBetween(dayKey(from), dayKey(today));
+  const burnedByKey = new Map<string, number>();
+  for (const a of acts) {
+    burnedByKey.set(a.dzien, (burnedByKey.get(a.dzien) ?? 0) + a.kcal);
+  }
   const byKey = new Map<string, Totals>();
   for (let i = 0; i < days; i++) {
     const d = new Date(from.getFullYear(), from.getMonth(), from.getDate() + i);
@@ -28,25 +36,36 @@ export async function dailyTotals(days: number): Promise<DayTotal[]> {
   return [...byKey.entries()].map(([key, t]) => ({
     key,
     date: parseDayKey(key),
+    spalone: burnedByKey.get(key) ?? 0,
     ...t,
   }));
 }
 
-export async function averages(days: number): Promise<Totals> {
+export async function averages(days: number): Promise<Averages> {
   const list = await dailyTotals(days);
-  if (list.length === 0) return { kcal: 0, bialko: 0, tluszcze: 0, wegle: 0 };
+  if (list.length === 0) {
+    return { kcal: 0, bialko: 0, tluszcze: 0, wegle: 0, spalone: 0 };
+  }
   let kcal = 0;
   let bialko = 0;
   let tluszcze = 0;
   let wegle = 0;
+  let spalone = 0;
   for (const d of list) {
     kcal += d.kcal;
     bialko += d.bialko;
     tluszcze += d.tluszcze;
     wegle += d.wegle;
+    spalone += d.spalone;
   }
   const n = list.length;
-  return { kcal: kcal / n, bialko: bialko / n, tluszcze: tluszcze / n, wegle: wegle / n };
+  return {
+    kcal: kcal / n,
+    bialko: bialko / n,
+    tluszcze: tluszcze / n,
+    wegle: wegle / n,
+    spalone: spalone / n,
+  };
 }
 
 /** Top N najczęściej jedzonych produktów (po znormalizowanej nazwie). */

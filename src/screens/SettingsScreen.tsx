@@ -23,12 +23,14 @@ export function SettingsScreen() {
   const proteinGoal = useStore((s) => s.proteinGoal);
   const fatGoal = useStore((s) => s.fatGoal);
   const carbsGoal = useStore((s) => s.carbsGoal);
+  const weightKg = useStore((s) => s.weightKg);
   const apiKey = useStore((s) => s.apiKey);
   const aiProvider = useStore((s) => s.aiProvider);
   const aiKeys = useStore((s) => s.aiKeys);
   const aiModels = useStore((s) => s.aiModels);
   const theme = useStore((s) => s.theme);
   const setGoals = useStore((s) => s.setGoals);
+  const setWeight = useStore((s) => s.setWeight);
   const setAiProvider = useStore((s) => s.setAiProvider);
   const setAiKey = useStore((s) => s.setAiKey);
   const setAiModel = useStore((s) => s.setAiModel);
@@ -50,6 +52,7 @@ export function SettingsScreen() {
   const [prot, setProt] = useState(String(Math.round(proteinGoal)));
   const [fat, setFat] = useState(String(Math.round(fatGoal)));
   const [carbs, setCarbs] = useState(String(Math.round(carbsGoal)));
+  const [weight, setWeightText] = useState(String(weightKg));
   const [busy, setBusy] = useState(false);
   const [wipeArmed, setWipeArmed] = useState(false);
 
@@ -141,7 +144,8 @@ export function SettingsScreen() {
       fat: num(fat, 65),
       carbs: num(carbs, 250),
     });
-    Alert.alert('Gotowe', 'Zapisano cele.');
+    setWeight(num(weight, 70));
+    Alert.alert('Gotowe', 'Zapisano cele i wagę.');
   };
 
   const saveAi = () => {
@@ -247,11 +251,15 @@ export function SettingsScreen() {
       style={{ flex: 1, backgroundColor: colors.background }}
       contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: 40 }}>
       <Text style={{ fontSize: 17, fontWeight: '800', color: colors.text }}>
-        Cele dzienne
+        Cele dzienne i waga
       </Text>
       <View style={cardStyle}>
         <Text style={{ color: colors.text }}>Cel kaloryczny (kcal)</Text>
         <TextInput value={kcal} onChangeText={setKcal} keyboardType="numeric" style={inputStyle} />
+        <Text style={{ color: colors.text }}>
+          Waga ciała (kg) — do wyliczania spalonych kcal
+        </Text>
+        <TextInput value={weight} onChangeText={setWeightText} keyboardType="numeric" style={inputStyle} />
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <View style={{ flex: 1 }}>
             <Text style={{ color: colors.text, marginBottom: 4 }}>Białko (g)</Text>
