@@ -22,7 +22,8 @@
     "android": {
       "package": "com.priv.kalorie",
       "permissions": [
-        "CAMERA"
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
       ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -45,6 +46,12 @@
       ],
       "expo-asset",
       "expo-sqlite"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "e363dbda-ef17-4ea9-b23f-72ea2bf36e9c"
+      }
+    },
+    "owner": "kristofersaid"
   }
 }
