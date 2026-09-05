@@ -39,7 +39,7 @@ export function ActivityScreen({ navigation, route }: Props) {
 
   const [name, setName] = useState('');
   const [kcal, setKcal] = useState('');
-  const [typeId, setTypeId] = useState(ACTIVITY_TYPES[5].id);
+  const [typeId, setTypeId] = useState('rower');
   const [minutes, setMinutes] = useState('30');
   const [km, setKm] = useState('');
 
@@ -76,7 +76,7 @@ export function ActivityScreen({ navigation, route }: Props) {
     ACTIVITY_TYPES.find((t) => t.id === typeId) ?? ACTIVITY_TYPES[0];
   const mins = toDouble(minutes, 0);
   const kms = toDouble(km, 0);
-  const computed = calcBurned(activeType.met, weightKg, mins);
+  const burned = calcBurned(activeType, weightKg, mins, kms);
   const pace = paceMinPerKm(mins, kms);
 
   const save = async () => {
@@ -105,7 +105,7 @@ export function ActivityScreen({ navigation, route }: Props) {
           name.trim() === '' ? activeType.nazwa : name.trim();
         const input = {
           nazwa: label,
-          kcal: computed,
+          kcal: burned.kcal,
           czasMin: mins,
           dystansKm: kms,
           dzien: day,
@@ -222,7 +222,11 @@ export function ActivityScreen({ navigation, route }: Props) {
                 value={km}
                 onChangeText={setKm}
                 keyboardType="numeric"
-                placeholder="np. 5 (rower/bieg)"
+                placeholder={
+                  activeType.paceTable
+                    ? 'np. 12 — liczy tempo i MET'
+                    : 'opcjonalnie, tylko info'
+                }
                 placeholderTextColor={colors.text + '66'}
                 style={inputStyle}
               />
@@ -243,11 +247,20 @@ export function ActivityScreen({ navigation, route }: Props) {
             </Text>
             <Text
               style={{ fontSize: 30, fontWeight: '800', color: '#2e7d32' }}>
-              −{fmtKcal(computed)}
+              −{fmtKcal(burned.kcal)}
             </Text>
-            {pace != null && (
+            {burned.speedKmh != null ? (
               <Text style={{ color: colors.text, opacity: 0.7 }}>
-                Tempo: {formatPace(pace)}
+                {burned.speedKmh.toFixed(1)} km/h
+                {pace != null ? ` • tempo ${formatPace(pace)}` : ''} • MET{' '}
+                {burned.met.toFixed(1)}
+              </Text>
+            ) : (
+              <Text style={{ color: colors.text, opacity: 0.7 }}>
+                MET {burned.met.toFixed(1)}
+                {activeType.paceTable
+                  ? ' • wpisz dystans, aby policzyć z tempa'
+                  : ''}
               </Text>
             )}
           </View>

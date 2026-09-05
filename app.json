@@ -21,6 +21,7 @@
     },
     "android": {
       "package": "com.priv.kalorie",
+      "softwareKeyboardLayoutMode": "resize",
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
