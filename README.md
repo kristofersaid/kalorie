@@ -11,7 +11,8 @@ Open Food Facts (wyszukiwanie produktów i kody kreskowe).
 | Obszar | Co potrafi |
 |---|---|
 | 🏠 Dashboard | Powitanie, ring kcal vs cel, słupki białko/tłuszcze/węgle, posiłki w kategoriach: Śniadanie, Lunch, Obiad, Kolacja, Przekąski, **Napoje** |
-| ➕ Dodawanie | 4 sposoby: **ręcznie** (ze zdjęciem), **wyszukiwarka** (baza lokalna + Open Food Facts), **zdjęcie posiłku** (AI), **zdjęcie etykiety** (AI odczytuje tabelę na 100 g) |
+| ➕ Dodawanie | **Zdjęcie posiłku** (AI), **zdjęcie etykiety** (AI czyta tabelę/100 g), **wyszukiwarka** (baza lokalna + Open Food Facts) + przycisk „Dodaj do mojej bazy”; edycja wpisów w tym samym miejscu |
+| 🗄️ Baza | **Moje wpisy** (lokalnie, wszystko na 100 g): przegląd, edycja, usuwanie + **Kreator** (jeden formularz: nazwa i makro + foto tabeli/posiłku + kod kreskowy ze skanerem + zdjęcie produktu) |
 | 📷 Skaner EAN | Kod kreskowy → produkt z OFF → gramatura / **całe opakowanie** / porcja; tryb **Zdjęcie AI** (jedno zdjęcie → routing kod/etykieta/posiłek); przy braku kodu: szukaj po nazwie, etykieta AI lub ręcznie |
 | 🗄️ Baza | **Moje produkty i dania** (lokalnie): szybkie dodawanie z gramaturą + kreator (ręcznie / kod / etykieta AI / zdjęcie AI dania) |
 | 🤖 AI | 5 dostawców do wyboru: Google Gemini, OpenAI, xAI Grok, Anthropic Claude, OpenRouter (własny klucz + model) |

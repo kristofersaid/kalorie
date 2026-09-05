@@ -94,9 +94,12 @@ export function AddMealScreen({ navigation, route }: Props) {
     aiModels,
     apiKey: legacyKey,
   });
-  const [tab, setTab] = useState<Tab>(route.params.tab ?? 'manual');
   const [day, setDay] = useState(route.params.day);
   const editingId = route.params.mealId;
+  const isEditing = editingId != null;
+  const [tab, setTab] = useState<Tab>(
+    isEditing ? 'manual' : (route.params.tab ?? 'search'),
+  );
 
   // Formularz ręczny
   const [name, setName] = useState('');
@@ -164,14 +167,14 @@ export function AddMealScreen({ navigation, route }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <View style={{ flexDirection: 'row', padding: 12, gap: 8 }}>
-        {(
-          [
-            ['manual', '✏️ Ręcznie'],
-            ['search', '🔍 Szukaj'],
-            ['photo', '📸 Zdjęcie'],
-            ['label', '🏷️ Etykieta'],
-          ] as [Tab, string][]
+      {!isEditing && (
+        <View style={{ flexDirection: 'row', padding: 12, gap: 8 }}>
+          {(
+            [
+              ['photo', '📸 Posiłek'],
+              ['label', '🏷️ Etykieta'],
+              ['search', '🔍 Szukaj'],
+            ] as [Tab, string][]
         ).map(([t, label]) => (
           <TouchableOpacity
             key={t}
@@ -195,9 +198,10 @@ export function AddMealScreen({ navigation, route }: Props) {
               {label}
             </Text>
           </TouchableOpacity>
-        ))}
-      </View>
-      {tab === 'manual' && (
+          ))}
+        </View>
+      )}
+      {(isEditing || tab === 'manual') && (
         <ManualTab
           name={name}
           setName={setName}
@@ -230,6 +234,7 @@ export function AddMealScreen({ navigation, route }: Props) {
             bump();
             navigation.goBack();
           }}
+          onCreateNew={() => navigation.navigate('Creator', {})}
         />
       )}
       {tab === 'photo' && (
@@ -406,6 +411,7 @@ function SearchTab(p: {
   category: number;
   setCategory: (i: number) => void;
   onAdded: () => void;
+  onCreateNew: () => void;
 }) {
   const { colors } = useTheme();
   const [q, setQ] = useState('');
@@ -700,10 +706,24 @@ function SearchTab(p: {
       {!busy && local.length === 0 && remote.length === 0 && (
         <Text style={{ textAlign: 'center', color: colors.text, opacity: 0.6, marginTop: 24 }}>
           {q.trim() === ''
-            ? 'Wpisz nazwę produktu, aby przeszukać bazę lokalną i Open Food Facts.'
-            : 'Brak wyników. Spróbuj innej nazwy lub dodaj ręcznie.'}
+            ? 'Wpisz nazwę produktu, aby przeszukać MOJĄ bazę i Open Food Facts.'
+            : 'Brak wyników tutaj.'}
         </Text>
       )}
+      <TouchableOpacity
+        onPress={p.onCreateNew}
+        style={{
+          borderWidth: 1,
+          borderColor: colors.primary,
+          borderRadius: 12,
+          padding: 13,
+          alignItems: 'center',
+          marginTop: 12,
+        }}>
+        <Text style={{ color: colors.primary, fontWeight: '800' }}>
+          ＋ Nie ma na liście? Dodaj do mojej bazy
+        </Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }

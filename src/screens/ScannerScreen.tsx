@@ -313,12 +313,10 @@ export function ScannerScreen() {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() =>
-              nav.navigate('AddMeal', { day: todayKey(), tab: 'manual' })
-            }
+            onPress={() => nav.navigate('Creator', {})}
             style={{ padding: 8 }}>
             <Text style={{ color: colors.text, opacity: 0.7 }}>
-              …albo dodaj ręcznie
+              …albo dodaj do mojej bazy
             </Text>
           </TouchableOpacity>
         </View>
