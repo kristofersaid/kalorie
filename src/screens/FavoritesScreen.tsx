@@ -33,6 +33,7 @@ import {
   SOURCE_TEMPLATE,
 } from '../lib/constants';
 import { fmtG, fmtKcal, scaleMacros, toDouble, todayKey } from '../lib/format';
+import { choosePhoto } from '../lib/photo';
 import { useStore } from '../store/useStore';
 import { CategoryChips } from '../components/CategoryChips';
 
@@ -464,6 +465,9 @@ function ProductForm({
   const [t, setT] = useState(initial ? String(initial.tluszcze100) : '');
   const [w, setW] = useState(initial ? String(initial.wegle100) : '');
   const [kod, setKod] = useState(initial?.kod ?? '');
+  const [zdjecie, setZdjecie] = useState<string | null>(
+    initial?.zdjecie ?? null,
+  );
 
   const inputStyle = {
     borderWidth: 1,
@@ -488,7 +492,7 @@ function ProductForm({
         tluszcze100: toDouble(t),
         wegle100: toDouble(w),
         kod: kod.trim() === '' ? null : kod.trim(),
-        zdjecie: initial?.zdjecie ?? null,
+        zdjecie,
       };
       if (initial) await updateFavorite(initial.id, data);
       else await insertFavorite(data);
@@ -517,6 +521,40 @@ function ProductForm({
       <TextInput value={t} onChangeText={setT} placeholder="Tłuszcze /100 g" keyboardType="numeric" placeholderTextColor={colors.text + '66'} style={inputStyle} />
       <TextInput value={w} onChangeText={setW} placeholder="Węgle /100 g" keyboardType="numeric" placeholderTextColor={colors.text + '66'} style={inputStyle} />
       <TextInput value={kod} onChangeText={setKod} placeholder="Kod kreskowy (opcjonalnie)" placeholderTextColor={colors.text + '66'} style={inputStyle} />
+      {zdjecie ? (
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 10,
+            marginBottom: 8,
+          }}>
+          <Image
+            source={{ uri: zdjecie }}
+            style={{ width: 64, height: 64, borderRadius: 10 }}
+          />
+          <TouchableOpacity onPress={() => setZdjecie(null)}>
+            <Text style={{ color: '#e53935', fontWeight: '700' }}>
+              Usuń zdjęcie
+            </Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <TouchableOpacity
+          onPress={() => choosePhoto((u) => setZdjecie(u))}
+          style={{
+            borderWidth: 1,
+            borderColor: colors.primary,
+            borderRadius: 10,
+            padding: 10,
+            alignItems: 'center',
+            marginBottom: 8,
+          }}>
+          <Text style={{ color: colors.primary, fontWeight: '700' }}>
+            📷 Dodaj zdjęcie produktu
+          </Text>
+        </TouchableOpacity>
+      )}
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <TouchableOpacity
           onPress={onClose}

@@ -110,14 +110,42 @@ function toGrams(n: number, unit: string): number | null {
 
 async function fetchJson(url: string): Promise<unknown> {
   const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 15000);
+  const t = setTimeout(() => ctrl.abort(), 20000);
+  let res: Response;
   try {
-    const res = await fetch(url, { signal: ctrl.signal });
-    if (!res.ok) throw new Error(`Błąd serwera OFF (${res.status})`);
-    return await res.json();
+    res = await fetch(url, {
+      signal: ctrl.signal,
+      headers: { 'User-Agent': 'KalorieApp/1.0 (Android; prywatny użytek)' },
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (msg.includes('abort')) throw new Error('OFF_TIMEOUT');
+    throw new Error(`OFF_NET: ${msg}`);
   } finally {
     clearTimeout(t);
   }
+  if (!res.ok) throw new Error(`OFF_HTTP_${res.status}`);
+  return await res.json();
+}
+
+/** Zamienia techniczny błąd OFF na czytelny komunikat po polsku. */
+export function offErrorMessage(e: unknown): string {
+  const msg = e instanceof Error ? e.message : String(e);
+  if (msg.startsWith('OFF_TIMEOUT')) {
+    return 'Serwer Open Food Facts nie odpowiada (limit 20 s). Spróbuj ponownie.';
+  }
+  if (msg.startsWith('OFF_NET')) {
+    return 'Brak połączenia z internetem albo zablokowany adres world.openfoodfacts.org (sprawdź Wi-Fi/dane, VPN, blokery reklam).';
+  }
+  const http = msg.match(/OFF_HTTP_(\d+)/);
+  if (http) {
+    const code = http[1];
+    if (code === '429') {
+      return 'Open Food Facts ograniczył zapytania (za dużo prób). Odczekaj minutę.';
+    }
+    return `Serwer Open Food Facts zwrócił błąd ${code}. Spróbuj później.`;
+  }
+  return `Błąd wyszukiwania: ${msg}`;
 }
 
 /** Wyszukiwanie produktów po nazwie. */

@@ -14,6 +14,7 @@ const HEADER = [
   'dzien',
   'created_at',
   'zrodlo',
+  'zdjecie',
 ];
 
 function esc(v: string | number): string {
@@ -81,6 +82,7 @@ export async function exportCsv(): Promise<string> {
         m.dzien,
         m.created_at,
         m.zrodlo,
+        esc(m.zdjecie ?? ''),
       ].join(','),
     );
   }
@@ -110,8 +112,8 @@ export async function importCsv(uri: string): Promise<number> {
         ? c[8]
         : new Date().toISOString().slice(0, 10);
       await db.runAsync(
-        `INSERT INTO meals (nazwa, kcal, bialko, tluszcze, wegle, waga, kategoria, dzien, created_at, zrodlo)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO meals (nazwa, kcal, bialko, tluszcze, wegle, waga, kategoria, dzien, created_at, zrodlo, zdjecie)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           nazwa,
           toNum(c[2]),
@@ -123,6 +125,7 @@ export async function importCsv(uri: string): Promise<number> {
           dzien,
           c[9] || new Date().toISOString(),
           c[10] || 'reczne',
+          c.length >= 12 && (c[11] ?? '').trim() !== '' ? c[11] : null,
         ],
       );
       count++;

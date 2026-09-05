@@ -11,6 +11,7 @@ export type MealInput = {
   kategoria: number;
   dzien: string;
   zrodlo?: string;
+  zdjecie?: string | null;
 };
 
 export async function mealsByDay(day: string): Promise<MealRow[]> {
@@ -42,8 +43,8 @@ export async function allMeals(): Promise<MealRow[]> {
 export async function insertMeal(m: MealInput): Promise<number> {
   const db = await getDb();
   const res = await db.runAsync(
-    `INSERT INTO meals (nazwa, kcal, bialko, tluszcze, wegle, waga, kategoria, dzien, created_at, zrodlo)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO meals (nazwa, kcal, bialko, tluszcze, wegle, waga, kategoria, dzien, created_at, zrodlo, zdjecie)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       m.nazwa.trim() === '' ? 'Posiłek' : m.nazwa.trim(),
       m.kcal,
@@ -55,6 +56,7 @@ export async function insertMeal(m: MealInput): Promise<number> {
       m.dzien,
       new Date().toISOString(),
       m.zrodlo ?? SOURCE_MANUAL,
+      m.zdjecie ?? null,
     ],
   );
   return res.lastInsertRowId;
@@ -64,7 +66,7 @@ export async function updateMeal(id: number, m: MealInput): Promise<void> {
   const db = await getDb();
   await db.runAsync(
     `UPDATE meals SET nazwa = ?, kcal = ?, bialko = ?, tluszcze = ?, wegle = ?,
-     waga = ?, kategoria = ?, dzien = ? WHERE id = ?`,
+     waga = ?, kategoria = ?, dzien = ?, zdjecie = ? WHERE id = ?`,
     [
       m.nazwa.trim() === '' ? 'Posiłek' : m.nazwa.trim(),
       m.kcal,
@@ -74,6 +76,7 @@ export async function updateMeal(id: number, m: MealInput): Promise<void> {
       m.waga,
       m.kategoria,
       m.dzien,
+      m.zdjecie ?? null,
       id,
     ],
   );

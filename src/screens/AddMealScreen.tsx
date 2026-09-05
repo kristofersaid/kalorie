@@ -32,7 +32,8 @@ import {
   scaleMacros,
   toDouble,
 } from '../lib/format';
-import { OffProduct, searchOff } from '../lib/off';
+import { OffProduct, offErrorMessage, searchOff } from '../lib/off';
+import { choosePhoto } from '../lib/photo';
 import { AiConfig, AiIngredient, AiResult, LabelResult, analyzeImage, analyzeLabel } from '../lib/ai';
 import { aiConfigOf, useStore } from '../store/useStore';
 import { RootStackParamList } from '../nav';
@@ -105,6 +106,7 @@ export function AddMealScreen({ navigation, route }: Props) {
   const [wegle, setWegle] = useState('');
   const [waga, setWaga] = useState('100');
   const [category, setCategory] = useState(defaultCategory());
+  const [photo, setPhoto] = useState<string | null>(null);
 
   useEffect(() => {
     if (editingId == null) return;
@@ -124,6 +126,7 @@ export function AddMealScreen({ navigation, route }: Props) {
         setWaga(String(Math.round(m.waga)));
         setCategory(m.kategoria);
         setDay(m.dzien);
+        setPhoto(m.zdjecie ?? null);
       } catch {
         Alert.alert('Błąd', 'Nie udało się wczytać wpisu.');
       }
@@ -145,6 +148,7 @@ export function AddMealScreen({ navigation, route }: Props) {
         waga: toDouble(waga),
         kategoria: category,
         dzien: day,
+        zdjecie: photo,
       };
       if (editingId != null) {
         await updateMeal(editingId, input);
@@ -211,6 +215,8 @@ export function AddMealScreen({ navigation, route }: Props) {
           setCategory={setCategory}
           day={day}
           setDay={setDay}
+          photo={photo}
+          setPhoto={setPhoto}
           editing={editingId != null}
           onSave={saveManual}
         />
@@ -308,6 +314,8 @@ function ManualTab(p: {
   setCategory: (i: number) => void;
   day: string;
   setDay: (d: string) => void;
+  photo: string | null;
+  setPhoto: (u: string | null) => void;
   editing: boolean;
   onSave: () => void;
 }) {
@@ -331,6 +339,38 @@ function ManualTab(p: {
         </TouchableOpacity>
       </View>
       <Field label="Nazwa posiłku *" value={p.name} onChange={p.setName} />
+      <View>
+        <Text style={{ color: colors.text, marginBottom: 4, fontSize: 13 }}>
+          Zdjęcie (opcjonalnie)
+        </Text>
+        {p.photo ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <Image
+              source={{ uri: p.photo }}
+              style={{ width: 72, height: 72, borderRadius: 10 }}
+            />
+            <TouchableOpacity onPress={() => p.setPhoto(null)}>
+              <Text style={{ color: '#e53935', fontWeight: '700' }}>
+                Usuń zdjęcie
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity
+            onPress={() => choosePhoto((u) => p.setPhoto(u))}
+            style={{
+              borderWidth: 1,
+              borderColor: colors.primary,
+              borderRadius: 10,
+              padding: 12,
+              alignItems: 'center',
+            }}>
+            <Text style={{ color: colors.primary, fontWeight: '700' }}>
+              📷 Dodaj zdjęcie
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <Field label="Kcal *" value={p.kcal} onChange={p.setKcal} numeric />
         <Field label="Waga (g)" value={p.waga} onChange={p.setWaga} numeric />
@@ -404,8 +444,8 @@ function SearchTab(p: {
     setLocal(await searchFavorites(needle).catch(() => []));
     try {
       setRemote(await searchOff(needle));
-    } catch {
-      setErr('Brak internetu lub błąd wyszukiwania. Wyniki lokalne nadal dostępne.');
+    } catch (e) {
+      setErr(`${offErrorMessage(e)} Wyniki lokalne nadal dostępne.`);
     } finally {
       setBusy(false);
     }
@@ -588,8 +628,21 @@ function SearchTab(p: {
             borderRadius: 10,
             padding: 10,
             marginBottom: 8,
+            gap: 8,
           }}>
           <Text style={{ color: '#b71c1c' }}>{err}</Text>
+          <TouchableOpacity
+            onPress={() => runSearch(q)}
+            style={{
+              backgroundColor: '#b71c1c',
+              borderRadius: 8,
+              padding: 10,
+              alignItems: 'center',
+            }}>
+            <Text style={{ color: '#fff', fontWeight: '700' }}>
+              🔄 Spróbuj ponownie
+            </Text>
+          </TouchableOpacity>
         </View>
       )}
       {local.length > 0 && (

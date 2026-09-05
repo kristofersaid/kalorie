@@ -14,6 +14,8 @@ export type MealRow = {
   /** ISO string momentu dodania. */
   created_at: string;
   zrodlo: string;
+  /** Lokalne URI zdjęcia (z aparatu/galerii) albo null. */
+  zdjecie: string | null;
 };
 
 export type FavoriteRow = {
@@ -66,7 +68,8 @@ export async function getDb(): Promise<SQLite.SQLiteDatabase> {
         kategoria INTEGER NOT NULL DEFAULT 4,
         dzien TEXT NOT NULL,
         created_at TEXT NOT NULL,
-        zrodlo TEXT NOT NULL DEFAULT 'reczne'
+        zrodlo TEXT NOT NULL DEFAULT 'reczne',
+        zdjecie TEXT
       );
       CREATE INDEX IF NOT EXISTS idx_meals_dzien ON meals (dzien);
       CREATE TABLE IF NOT EXISTS favorites (
@@ -97,6 +100,12 @@ export async function getDb(): Promise<SQLite.SQLiteDatabase> {
         wegle REAL NOT NULL DEFAULT 0
       );
     `);
+    // Migracja dla baz utworzonych przed v1.1: kolumna na zdjęcie posiłku.
+    try {
+      await db.execAsync('ALTER TABLE meals ADD COLUMN zdjecie TEXT;');
+    } catch {
+      // Kolumna już istnieje – nic do zrobienia.
+    }
     initDone = true;
   }
   return db;

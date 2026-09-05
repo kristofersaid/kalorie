@@ -14,6 +14,7 @@ import * as Sharing from 'expo-sharing';
 import { wipeAll } from '../db/database';
 import { exportCsv, importCsv } from '../lib/csv';
 import { AI_PROVIDERS, AiProviderId, listGoogleModels, providerInfo } from '../lib/ai';
+import { offErrorMessage, searchOff } from '../lib/off';
 import { useStore, ThemeChoice } from '../store/useStore';
 
 export function SettingsScreen() {
@@ -64,6 +65,8 @@ export function SettingsScreen() {
   const [models, setModels] = useState<string[] | null>(null);
   const [modelsBusy, setModelsBusy] = useState(false);
   const [modelsErr, setModelsErr] = useState<string | null>(null);
+  const [netTest, setNetTest] = useState<string | null>(null);
+  const [netBusy, setNetBusy] = useState(false);
 
   const fetchModels = async () => {
     const k = key.trim() !== '' ? key.trim() : storedKeyFor(aiProvider);
@@ -77,6 +80,35 @@ export function SettingsScreen() {
       return;
     }
     setModels(r.models);
+  };
+
+  const runNetTest = async () => {
+    setNetBusy(true);
+    setNetTest('Sprawdzam…');
+    const lines: string[] = [];
+    try {
+      const r = await searchOff('pepsi');
+      lines.push(
+        `✅ Open Food Facts: połączenie OK (przykładowy wynik: "${r[0]?.nazwa ?? '—'}")`,
+      );
+    } catch (e) {
+      lines.push(`❌ Open Food Facts: ${offErrorMessage(e)}`);
+    }
+    if (aiProvider === 'google') {
+      const k = key.trim() !== '' ? key.trim() : storedKeyFor(aiProvider);
+      const m = await listGoogleModels(k);
+      if (m.error) lines.push(`❌ Google AI: ${m.error}`);
+      else
+        lines.push(
+          `✅ Google AI: klucz działa (dostępnych modeli: ${m.models.length})`,
+        );
+    } else {
+      lines.push(
+        `ℹ️ AI (${providerInfo(aiProvider).label}): ten test sprawdza tylko Google — działanie innego dostawcy widać przy analizie zdjęcia.`,
+      );
+    }
+    setNetBusy(false);
+    setNetTest(lines.join('\n'));
   };
 
   const num = (t: string, fb: number): number => {
@@ -422,6 +454,33 @@ export function SettingsScreen() {
         {themeRow('system', 'Systemowy')}
         {themeRow('light', 'Jasny')}
         {themeRow('dark', 'Ciemny')}
+      </View>
+
+      <Text style={{ fontSize: 17, fontWeight: '800', color: colors.text }}>
+        Połączenie
+      </Text>
+      <View style={cardStyle}>
+        <Text style={{ color: colors.text, opacity: 0.75, fontSize: 13 }}>
+          Sprawdza, czy telefon łączy się z Open Food Facts (i z Google AI,
+          jeśli jest wybrane).
+        </Text>
+        <TouchableOpacity
+          onPress={runNetTest}
+          disabled={netBusy}
+          style={{
+            borderWidth: 1,
+            borderColor: colors.primary,
+            borderRadius: 12,
+            padding: 13,
+            alignItems: 'center',
+          }}>
+          <Text style={{ color: colors.primary, fontWeight: '800' }}>
+            {netBusy ? 'Sprawdzam…' : '🔌 Testuj połączenie'}
+          </Text>
+        </TouchableOpacity>
+        {netTest && (
+          <Text style={{ color: colors.text, fontSize: 13 }}>{netTest}</Text>
+        )}
       </View>
 
       <Text style={{ fontSize: 17, fontWeight: '800', color: colors.text }}>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { MealRow } from '../db/database';
 import { sourceLabel } from '../lib/constants';
@@ -26,7 +26,13 @@ export function MealCard({
         borderWidth: 1,
         borderColor: colors.border,
       }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
+        {meal.zdjecie ? (
+          <Image
+            source={{ uri: meal.zdjecie }}
+            style={{ width: 52, height: 52, borderRadius: 10 }}
+          />
+        ) : null}
         <Text
           style={{ fontWeight: '700', color: colors.text, flex: 1, fontSize: 15 }}
           numberOfLines={2}>
