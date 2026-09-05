@@ -38,6 +38,11 @@ export function ProductForm({
   const [t, setT] = useState(initial ? String(initial.tluszcze100) : '');
   const [w, setW] = useState(initial ? String(initial.wegle100) : '');
   const [kod, setKod] = useState(initial?.kod ?? '');
+  const [totalW, setTotalW] = useState(
+    initial?.opakowanie_g != null && initial.opakowanie_g > 0
+      ? String(Math.round(initial.opakowanie_g))
+      : '',
+  );
   const [defCat, setDefCat] = useState(initial?.kategoria ?? 4);
   const [zdjecie, setZdjecie] = useState<string | null>(
     initial?.zdjecie ?? null,
@@ -68,6 +73,12 @@ export function ProductForm({
         kod: kod.trim() === '' ? null : kod.trim(),
         zdjecie,
         kategoria: defCat,
+        opakowanieG: (() => {
+          const n = parseFloat(totalW.replace(',', '.'));
+          return Number.isFinite(n) && n > 0 && n <= 10000
+            ? Math.round(n)
+            : null;
+        })(),
       };
       if (initial && initial.id > 0) await updateFavorite(initial.id, data);
       else await insertFavorite(data);
@@ -98,6 +109,7 @@ export function ProductForm({
       <TextInput value={t} onChangeText={setT} placeholder="Tłuszcze /100 g" keyboardType="numeric" placeholderTextColor={colors.text + '66'} style={inputStyle} />
       <TextInput value={w} onChangeText={setW} placeholder="Węgle /100 g" keyboardType="numeric" placeholderTextColor={colors.text + '66'} style={inputStyle} />
       <TextInput value={kod} onChangeText={setKod} placeholder="Kod kreskowy (opcjonalnie)" placeholderTextColor={colors.text + '66'} style={inputStyle} />
+      <TextInput value={totalW} onChangeText={setTotalW} placeholder="Waga całego opakowania w g/ml (opcjonalnie)" keyboardType="numeric" placeholderTextColor={colors.text + '66'} style={inputStyle} />
       <Text style={{ color: colors.text, fontWeight: '600', marginBottom: 6, fontSize: 13 }}>
         Co to zwykle jest? (wybierze się samo przy dodawaniu)
       </Text>

@@ -67,6 +67,7 @@ async function rememberProduct(p: {
   wegle100: number;
   kod?: string | null;
   zdjecie?: string | null;
+  opakowanieG?: number | null;
 }): Promise<void> {
   try {
     const found = await searchFavorites(p.nazwa);
@@ -572,7 +573,7 @@ function SearchTab(p: {
             ...(picked.opakowanieG
               ? [
                   {
-                    label: `Całe opakowanie (${picked.opakowanieG} g)`,
+                    label: `Całość (${picked.opakowanieG} g)`,
                     grams: picked.opakowanieG,
                   },
                 ]
@@ -673,7 +674,18 @@ function SearchTab(p: {
                     ? f.kategoria
                     : p.category,
                 );
-                setPicked({ ...f, fromLocal: true });
+                setPicked({
+                  nazwa: f.nazwa,
+                  kcal100: f.kcal100,
+                  bialko100: f.bialko100,
+                  tluszcze100: f.tluszcze100,
+                  wegle100: f.wegle100,
+                  kod: f.kod,
+                  zdjecie: f.zdjecie,
+                  opakowanieG: f.opakowanie_g,
+                  porcjaG: null,
+                  fromLocal: true,
+                });
                 setGrams(100);
               },
             ),
@@ -960,6 +972,7 @@ function LabelTab(p: {
   const [w, setW] = useState('');
   const [grams, setGrams] = useState(100);
   const [extras, setExtras] = useState<{ label: string; grams: number }[]>([]);
+  const [opakG, setOpakG] = useState<number | null>(null);
 
   const pick = async (fromCamera: boolean) => {
     if (p.cfg.apiKey.trim() === '') {
@@ -995,7 +1008,7 @@ function LabelTab(p: {
       const chips: { label: string; grams: number }[] = [];
       if (r.opakowanieG) {
         chips.push({
-          label: `Całe opakowanie (${r.opakowanieG} g)`,
+          label: `Całość (${r.opakowanieG} g)`,
           grams: r.opakowanieG,
         });
       }
@@ -1006,6 +1019,7 @@ function LabelTab(p: {
         });
       }
       setExtras(chips);
+      setOpakG(r.opakowanieG ?? null);
       setGrams(100);
       setScanned(true);
     } catch {
@@ -1048,6 +1062,7 @@ function LabelTab(p: {
         bialko100: toDouble(b),
         tluszcze100: toDouble(t),
         wegle100: toDouble(w),
+        opakowanieG: opakG,
       });
       p.onAdded();
     } catch {

@@ -49,6 +49,7 @@ export function CreatorScreen({ navigation, route }: Props) {
   const [w, setW] = useState('');
   const [code, setCode] = useState('');
   const [photo, setPhoto] = useState<string | null>(null);
+  const [totalW, setTotalW] = useState('');
   const [defCat, setDefCat] = useState(4);
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -77,6 +78,11 @@ export function CreatorScreen({ navigation, route }: Props) {
           setCode(row.kod ?? '');
           setPhoto(row.zdjecie ?? null);
           setDefCat(row.kategoria);
+          setTotalW(
+            row.opakowanie_g != null && row.opakowanie_g > 0
+              ? String(Math.round(row.opakowanie_g))
+              : '',
+          );
         }
       } catch {
         Alert.alert('Błąd', 'Nie udało się wczytać wpisu.');
@@ -148,6 +154,7 @@ export function CreatorScreen({ navigation, route }: Props) {
         setB(String(r.bialko100));
         setT(String(r.tluszcze100));
         setW(String(r.wegle100));
+        if (r.opakowanieG) setTotalW(String(r.opakowanieG));
         const extra =
           r.opakowanieG || r.porcjaG
             ? ` (opakowanie: ${r.opakowanieG ?? '—'} g, porcja: ${r.porcjaG ?? '—'} g)`
@@ -218,6 +225,7 @@ export function CreatorScreen({ navigation, route }: Props) {
       setT(String(p.tluszcze100));
       setW(String(p.wegle100));
       if (!photo && p.zdjecie) setPhoto(p.zdjecie);
+      if (p.opakowanieG) setTotalW(String(p.opakowanieG));
       const pack = p.opakowanieG ? ` Opakowanie: ok. ${p.opakowanieG} g.` : '';
       setInfo(`Znaleziono: ${p.nazwa} (${fmtKcal(p.kcal100)} /100 g).${pack}`);
     } catch (e) {
@@ -269,6 +277,12 @@ export function CreatorScreen({ navigation, route }: Props) {
         kod: code.trim() === '' ? null : code.trim(),
         zdjecie: photo,
         kategoria: defCat,
+        opakowanieG: (() => {
+          const n = parseFloat(totalW.replace(',', '.'));
+          return Number.isFinite(n) && n > 0 && n <= 10000
+            ? Math.round(n)
+            : null;
+        })(),
       };
       if (editId != null) await updateFavorite(editId, data);
       else await insertFavorite(data);
@@ -375,6 +389,17 @@ export function CreatorScreen({ navigation, route }: Props) {
           />
         </View>
       </View>
+      <Text style={{ color: colors.text, marginBottom: 4, fontSize: 13 }}>
+        Waga całego opakowania w g / ml (opcjonalnie — do przycisku „Całość”)
+      </Text>
+      <TextInput
+        value={totalW}
+        onChangeText={setTotalW}
+        placeholder="np. 500 (butelka 500 ml) albo 150 (baton)"
+        placeholderTextColor={colors.text + '66'}
+        keyboardType="numeric"
+        style={inputStyle}
+      />
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <TouchableOpacity
           onPress={photoLabel}

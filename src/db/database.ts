@@ -30,6 +30,8 @@ export type FavoriteRow = {
   ulubione: number;
   /** Domyślna kategoria (indeks z CATEGORIES) przy dodawaniu „zjadłem”. */
   kategoria: number;
+  /** Całkowita waga opakowania w g/ml (do chipu „Całość”), null gdy brak. */
+  opakowanie_g: number | null;
   created_at: string;
 };
 
@@ -85,6 +87,7 @@ export async function getDb(): Promise<SQLite.SQLiteDatabase> {
         zdjecie TEXT,
         ulubione INTEGER NOT NULL DEFAULT 1,
         kategoria INTEGER NOT NULL DEFAULT 4,
+        opakowanie_g REAL,
         created_at TEXT NOT NULL
       );
       CREATE TABLE IF NOT EXISTS templates (
@@ -114,6 +117,12 @@ export async function getDb(): Promise<SQLite.SQLiteDatabase> {
       await db.execAsync(
         'ALTER TABLE favorites ADD COLUMN kategoria INTEGER NOT NULL DEFAULT 4;',
       );
+    } catch {
+      // Kolumna już istnieje – nic do zrobienia.
+    }
+    // Migracja: całkowita waga opakowania (chip „Całość”).
+    try {
+      await db.execAsync('ALTER TABLE favorites ADD COLUMN opakowanie_g REAL;');
     } catch {
       // Kolumna już istnieje – nic do zrobienia.
     }

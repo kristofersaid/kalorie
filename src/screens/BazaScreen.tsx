@@ -161,6 +161,9 @@ export function BazaScreen({ navigation }: Props) {
                   {fmtKcal(f.kcal100)} /100 g • B:{f.bialko100.toFixed(1)}g T:
                   {f.tluszcze100.toFixed(1)}g W:{f.wegle100.toFixed(1)}g
                   {f.kod ? ` • EAN: ${f.kod}` : ''}
+                  {f.opakowanie_g != null && f.opakowanie_g > 0
+                    ? ` • opak.: ${Math.round(f.opakowanie_g)} g`
+                    : ''}
                   {`\nZwykle: ${CATEGORIES[f.kategoria] ?? CATEGORIES[4]}`}
                 </Text>
               </View>

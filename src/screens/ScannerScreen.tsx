@@ -116,6 +116,7 @@ export function ScannerScreen() {
             kod: product.kod,
             zdjecie: product.zdjecie,
             ulubione: false,
+            opakowanieG: product.opakowanieG,
           });
         }
       } catch {
@@ -367,7 +368,7 @@ export function ScannerScreen() {
               ...(product.opakowanieG
                 ? [
                     {
-                      label: `Całe opakowanie (${product.opakowanieG} g)`,
+                      label: `Całość (${product.opakowanieG} g)`,
                       grams: product.opakowanieG,
                     },
                   ]

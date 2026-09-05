@@ -43,6 +43,7 @@ async function rememberProduct(p: {
   wegle100: number;
   kod?: string | null;
   zdjecie?: string | null;
+  opakowanieG?: number | null;
 }): Promise<void> {
   try {
     const found = await searchFavorites(p.nazwa);
@@ -102,6 +103,7 @@ export function SmartCapture({
   const [lt, setLt] = useState('');
   const [lw, setLw] = useState('');
   const [extras, setExtras] = useState<{ label: string; grams: number }[]>([]);
+  const [opakG, setOpakG] = useState<number | null>(null);
 
   const needKey = (): boolean => {
     if (cfg.apiKey.trim() === '') {
@@ -193,7 +195,7 @@ export function SmartCapture({
     const chips: { label: string; grams: number }[] = [];
     if (r.opakowanieG) {
       chips.push({
-        label: `Całe opakowanie (${r.opakowanieG} g)`,
+        label: `Całość (${r.opakowanieG} g)`,
         grams: r.opakowanieG,
       });
     }
@@ -204,6 +206,7 @@ export function SmartCapture({
       });
     }
     setExtras(chips);
+    setOpakG(r.opakowanieG ?? null);
     setGrams(100);
   };
 
@@ -280,6 +283,7 @@ export function SmartCapture({
         bialko100: toDouble(lb),
         tluszcze100: toDouble(lt),
         wegle100: toDouble(lw),
+        opakowanieG: opakG,
       });
       finish(`Dodano: ${lname}`);
     } catch {
@@ -299,6 +303,7 @@ export function SmartCapture({
         bialko100: toDouble(lb),
         tluszcze100: toDouble(lt),
         wegle100: toDouble(lw),
+        opakowanieG: opakG,
       });
       finish(`Zapisano w bazie: ${lname}`);
     } catch {
@@ -434,7 +439,7 @@ export function SmartCapture({
             ...(p.opakowanieG
               ? [
                   {
-                    label: `Całe opakowanie (${p.opakowanieG} g)`,
+                    label: `Całość (${p.opakowanieG} g)`,
                     grams: p.opakowanieG,
                   },
                 ]

@@ -379,6 +379,21 @@ function ProductTile({
       </View>
       {adding ? (
         <View style={{ marginTop: 8, gap: 8 }}>
+          {f.opakowanie_g != null && f.opakowanie_g > 0 && (
+            <TouchableOpacity
+              onPress={() => setGrams(String(Math.round(f.opakowanie_g as number)))}
+              style={{
+                alignSelf: 'flex-start',
+                backgroundColor: '#2e7d32',
+                borderRadius: 14,
+                paddingVertical: 6,
+                paddingHorizontal: 14,
+              }}>
+              <Text style={{ color: '#fff', fontWeight: '700' }}>
+                Całość ({Math.round(f.opakowanie_g as number)} g)
+              </Text>
+            </TouchableOpacity>
+          )}
           <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
             <TextInput
               value={grams}
