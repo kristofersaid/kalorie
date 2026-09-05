@@ -1,0 +1,50 @@
+{
+  "expo": {
+    "name": "Kalorie",
+    "slug": "kalorie-expo",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "kalorie",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Aplikacja używa aparatu do rozpoznawania posiłków ze zdjęć i skanowania kodów kreskowych.",
+        "NSPhotoLibraryUsageDescription": "Aplikacja potrzebuje dostępu do galerii, aby analizować zdjęcia posiłków."
+      }
+    },
+    "android": {
+      "package": "com.priv.kalorie",
+      "permissions": [
+        "CAMERA"
+      ],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Aplikacja używa aparatu do rozpoznawania posiłków ze zdjęć i skanowania kodów kreskowych."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Aplikacja potrzebuje dostępu do galerii, aby analizować zdjęcia posiłków.",
+          "cameraPermission": "Aplikacja używa aparatu do rozpoznawania posiłków ze zdjęć."
+        }
+      ],
+      "expo-asset",
+      "expo-sqlite"
+    ]
+  }
+}
