@@ -199,10 +199,20 @@ export function ScannerScreen() {
             alignItems: 'center',
             justifyContent: 'center',
             padding: 24,
-            gap: 12,
+            gap: 10,
           }}>
           <Text style={{ fontSize: 48 }}>⚠️</Text>
           <Text style={{ textAlign: 'center', color: colors.text }}>{err}</Text>
+          <Text
+            style={{
+              textAlign: 'center',
+              color: colors.text,
+              opacity: 0.65,
+              fontSize: 13,
+            }}>
+            Tego kodu nie ma (jeszcze) w bazie Open Food Facts. Możesz dodać
+            produkt inaczej:
+          </Text>
           <TouchableOpacity
             onPress={() => {
               setErr(null);
@@ -213,9 +223,49 @@ export function ScannerScreen() {
               borderRadius: 10,
               padding: 12,
               paddingHorizontal: 24,
+              marginTop: 4,
             }}>
             <Text style={{ color: '#fff', fontWeight: '700' }}>
               Skanuj ponownie
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() =>
+              nav.navigate('AddMeal', { day: todayKey(), tab: 'search' })
+            }
+            style={{
+              borderWidth: 1,
+              borderColor: colors.primary,
+              borderRadius: 10,
+              padding: 12,
+              paddingHorizontal: 24,
+            }}>
+            <Text style={{ color: colors.primary, fontWeight: '700' }}>
+              🔍 Znajdź po nazwie
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() =>
+              nav.navigate('AddMeal', { day: todayKey(), tab: 'label' })
+            }
+            style={{
+              borderWidth: 1,
+              borderColor: colors.primary,
+              borderRadius: 10,
+              padding: 12,
+              paddingHorizontal: 24,
+            }}>
+            <Text style={{ color: colors.primary, fontWeight: '700' }}>
+              🏷️ Zrób zdjęcie etykiety (AI)
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() =>
+              nav.navigate('AddMeal', { day: todayKey(), tab: 'manual' })
+            }
+            style={{ padding: 8 }}>
+            <Text style={{ color: colors.text, opacity: 0.7 }}>
+              …albo dodaj ręcznie
             </Text>
           </TouchableOpacity>
         </View>

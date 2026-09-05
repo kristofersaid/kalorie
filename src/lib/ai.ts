@@ -344,6 +344,53 @@ async function anthropicText(
   }
 }
 
+/** Pobiera listę modeli Google dostępnych dla klucza (do wyboru w Ustawieniach). */
+export async function listGoogleModels(
+  apiKey: string,
+): Promise<{ models: string[]; error?: string }> {
+  const key = apiKey.trim();
+  if (key === '') {
+    return { models: [], error: 'Wklej najpierw klucz API.' };
+  }
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 20000);
+    let res: Response;
+    try {
+      res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(
+          key,
+        )}&pageSize=50`,
+        { signal: ctrl.signal },
+      );
+    } finally {
+      clearTimeout(t);
+    }
+    if (!res.ok) {
+      if (res.status === 400) {
+        return { models: [], error: 'Nieprawidłowy klucz API Google.' };
+      }
+      return { models: [], error: `Błąd Google (${res.status}).` };
+    }
+    const data = (await res.json()) as {
+      models?: {
+        name?: string;
+        supportedGenerationMethods?: string[];
+      }[];
+    };
+    const names = (data.models ?? [])
+      .filter((m) => m.supportedGenerationMethods?.includes('generateContent'))
+      .map((m) => (m.name ?? '').replace(/^models\//, ''))
+      .filter((n) => n !== '');
+    if (names.length === 0) {
+      return { models: [], error: 'Brak dostępnych modeli dla tego klucza.' };
+    }
+    return { models: names };
+  } catch {
+    return { models: [], error: 'Brak internetu lub błąd połączenia.' };
+  }
+}
+
 /** Wysyła zdjęcie + prompt do wybranego dostawcy, zwraca surowy tekst. */
 async function aiText(
   cfg: AiConfig,

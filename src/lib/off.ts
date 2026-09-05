@@ -145,11 +145,55 @@ export async function searchOff(query: string): Promise<OffProduct[]> {
 export async function productByBarcode(
   barcode: string,
 ): Promise<OffProduct | null> {
-  const code = barcode.trim();
+  const code = barcode.trim().replace(/\s+/g, '');
   if (code === '') return null;
+  // Warianty kodu: UPC-A (12 cyfr) bywa indeksowany jako EAN-13 z zerem.
+  const variants = [code];
+  if (/^\d{12}$/.test(code)) variants.push(`0${code}`);
+  if (/^\d{13}$/.test(code) && code.startsWith('0')) {
+    variants.push(code.slice(1));
+  }
+  // Pierwszy wariant rzuca błąd sieci (do rozróżnienia offline vs brak).
+  const first = await byBarcodeExact(code);
+  if (first) return first;
+  for (const v of variants.slice(1)) {
+    try {
+      const p = await byBarcodeExact(v);
+      if (p) return p;
+    } catch {
+      /* próbuj dalej */
+    }
+  }
+  // Fallback: wyszukiwanie tekstowe po kodzie (indeks bywa pełniejszy).
+  try {
+    return await searchByCode(code);
+  } catch {
+    return null;
+  }
+}
+
+async function byBarcodeExact(code: string): Promise<OffProduct | null> {
   const data = (await fetchJson(
     `${OFF_PRODUCT_URL}/${encodeURIComponent(code)}.json`,
   )) as { status?: unknown; product?: Record<string, unknown> };
   if (toDouble(data.status, 0) !== 1 || !data.product) return null;
   return fromJson(data.product, code);
+}
+
+/** Szuka produktu po kodzie przez wyszukiwarkę tekstową OFF. */
+async function searchByCode(code: string): Promise<OffProduct | null> {
+  const url =
+    `${OFF_SEARCH_URL}?search_terms=${encodeURIComponent(code)}` +
+    '&search_simple=1&action=process&json=1' +
+    `&fields=product_name,product_name_pl,nutriments,image_url,code,quantity,serving_size&page_size=5`;
+  const data = (await fetchJson(url)) as {
+    products?: Record<string, unknown>[];
+  };
+  for (const p of data.products ?? []) {
+    const prod = fromJson(p, null);
+    if (prod.nazwa !== 'Produkt' && (prod.kcal100 > 0 || prod.bialko100 > 0)) {
+      return prod;
+    }
+  }
+  return null;
 }

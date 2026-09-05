@@ -5,9 +5,11 @@ export type TabParamList = {
   Ustawienia: undefined;
 };
 
+export type AddMealTab = 'manual' | 'search' | 'photo' | 'label';
+
 export type RootStackParamList = {
   Tabs: undefined;
-  AddMeal: { day: string; mealId?: number };
+  AddMeal: { day: string; mealId?: number; tab?: AddMealTab };
   Scanner: undefined;
   Stats: undefined;
 };

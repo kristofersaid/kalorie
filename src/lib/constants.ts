@@ -22,7 +22,7 @@ export const OFF_SEARCH_URL =
 export const OFF_PRODUCT_URL =
   'https://world.openfoodfacts.org/api/v0/product';
 
-export const GEMINI_MODEL = 'gemini-1.5-flash';
+export const GEMINI_MODEL = 'gemini-2.0-flash';
 
 export const GEMINI_LABEL_PROMPT = `Jesteś ekspertem od żywienia. Na zdjęciu jest tabela wartości odżywczych (etykieta produktu spożywczego).
 Odczytaj wartości W PRZELICZENIU NA 100 g (lub 100 ml). Jeśli tabela podaje wartości tylko na porcję, przelicz je na 100 g na podstawie podanej wielkości porcji.

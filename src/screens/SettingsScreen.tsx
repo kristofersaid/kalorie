@@ -13,7 +13,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as Sharing from 'expo-sharing';
 import { wipeAll } from '../db/database';
 import { exportCsv, importCsv } from '../lib/csv';
-import { AI_PROVIDERS, AiProviderId, providerInfo } from '../lib/ai';
+import { AI_PROVIDERS, AiProviderId, listGoogleModels, providerInfo } from '../lib/ai';
 import { useStore, ThemeChoice } from '../store/useStore';
 
 export function SettingsScreen() {
@@ -56,8 +56,28 @@ export function SettingsScreen() {
   useEffect(() => {
     setKey(storedKeyFor(aiProvider));
     setModel(aiModels[aiProvider] || '');
+    setModels(null);
+    setModelsErr(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aiProvider]);
+
+  const [models, setModels] = useState<string[] | null>(null);
+  const [modelsBusy, setModelsBusy] = useState(false);
+  const [modelsErr, setModelsErr] = useState<string | null>(null);
+
+  const fetchModels = async () => {
+    const k = key.trim() !== '' ? key.trim() : storedKeyFor(aiProvider);
+    setModelsBusy(true);
+    setModelsErr(null);
+    const r = await listGoogleModels(k);
+    setModelsBusy(false);
+    if (r.error) {
+      setModelsErr(r.error);
+      setModels(null);
+      return;
+    }
+    setModels(r.models);
+  };
 
   const num = (t: string, fb: number): number => {
     const n = parseFloat(t.replace(',', '.'));
@@ -324,6 +344,65 @@ export function SettingsScreen() {
           autoCorrect={false}
           style={inputStyle}
         />
+        {aiProvider === 'google' && (
+          <>
+            <TouchableOpacity
+              onPress={fetchModels}
+              disabled={modelsBusy}
+              style={{
+                borderWidth: 1,
+                borderColor: colors.primary,
+                borderRadius: 12,
+                padding: 13,
+                alignItems: 'center',
+              }}>
+              <Text style={{ color: colors.primary, fontWeight: '800' }}>
+                {modelsBusy
+                  ? 'Pobieram…'
+                  : '🔍 Pobierz listę modeli z Google'}
+              </Text>
+            </TouchableOpacity>
+            {modelsErr && (
+              <Text style={{ color: '#b71c1c' }}>{modelsErr}</Text>
+            )}
+            {(models ?? []).map((m) => (
+              <TouchableOpacity
+                key={m}
+                onPress={() => setModel(m)}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 8,
+                  paddingVertical: 6,
+                }}>
+                <View
+                  style={{
+                    width: 18,
+                    height: 18,
+                    borderRadius: 9,
+                    borderWidth: 2,
+                    borderColor: colors.primary,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                  {(model.trim() === m ||
+                    (model.trim() === '' &&
+                      m === providerInfo(aiProvider).defaultModel)) && (
+                    <View
+                      style={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: 5,
+                        backgroundColor: colors.primary,
+                      }}
+                    />
+                  )}
+                </View>
+                <Text style={{ color: colors.text, flex: 1 }}>{m}</Text>
+              </TouchableOpacity>
+            ))}
+          </>
+        )}
         <TouchableOpacity
           onPress={saveAi}
           style={{

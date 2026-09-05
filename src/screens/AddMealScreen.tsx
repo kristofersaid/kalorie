@@ -93,7 +93,7 @@ export function AddMealScreen({ navigation, route }: Props) {
     aiModels,
     apiKey: legacyKey,
   });
-  const [tab, setTab] = useState<Tab>('manual');
+  const [tab, setTab] = useState<Tab>(route.params.tab ?? 'manual');
   const [day, setDay] = useState(route.params.day);
   const editingId = route.params.mealId;
 
@@ -742,8 +742,8 @@ function PhotoTab(p: {
   return (
     <ScrollView contentContainerStyle={{ padding: 16, gap: 12 }}>
       <Text style={{ textAlign: 'center', color: colors.text, opacity: 0.75 }}>
-        Zrób zdjęcie posiłku – AI (Gemini 1.5 Flash) rozpozna składniki i
-        oszacuje kalorie.
+        Zrób zdjęcie posiłku – AI (wybrany dostawca w Ustawieniach)
+        rozpozna składniki i oszacuje kalorie.
       </Text>
       {busy ? (
         <View style={{ alignItems: 'center', padding: 24, gap: 12 }}>
