@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Modal,
   ScrollView,
   Text,
   TextInput,
@@ -443,8 +444,11 @@ export function CreatorScreen({ navigation, route }: Props) {
           <Text style={{ fontSize: 22 }}>📷</Text>
         </TouchableOpacity>
       </View>
-      {scanning && (
-        <View style={{ height: 280, borderRadius: 12, overflow: 'hidden' }}>
+      <Modal
+        visible={scanning}
+        animationType="slide"
+        onRequestClose={() => setScanning(false)}>
+        <View style={{ flex: 1, backgroundColor: '#000' }}>
           <CameraView
             style={{ flex: 1 }}
             facing="back"
@@ -455,21 +459,49 @@ export function CreatorScreen({ navigation, route }: Props) {
               if (r.data) onScanned(r.data);
             }}
           />
+          <View
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              alignItems: 'center',
+              justifyContent: 'center',
+              pointerEvents: 'none',
+            }}>
+            <View
+              style={{
+                width: 260,
+                height: 150,
+                borderWidth: 3,
+                borderColor: '#fff',
+                borderRadius: 12,
+              }}
+            />
+            <Text style={{ color: '#fff', marginTop: 12, fontWeight: '600' }}>
+              Nakieruj na kod kreskowy
+            </Text>
+          </View>
           <TouchableOpacity
             onPress={() => setScanning(false)}
             style={{
               position: 'absolute',
-              bottom: 10,
+              bottom: 40,
               alignSelf: 'center',
-              backgroundColor: '#000000aa',
-              borderRadius: 8,
-              padding: 10,
-              paddingHorizontal: 20,
+              backgroundColor: '#ffffff22',
+              borderWidth: 1,
+              borderColor: '#fff',
+              borderRadius: 24,
+              paddingVertical: 12,
+              paddingHorizontal: 32,
             }}>
-            <Text style={{ color: '#fff', fontWeight: '700' }}>Anuluj</Text>
+            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>
+              Anuluj
+            </Text>
           </TouchableOpacity>
         </View>
-      )}
+      </Modal>
 
       {/* Sekcja 3: zdjęcie produktu */}
       <Text style={{ fontSize: 17, fontWeight: '800', color: colors.text }}>
