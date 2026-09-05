@@ -87,3 +87,21 @@ export async function deleteFavorite(id: number): Promise<void> {
   const db = await getDb();
   await db.runAsync('DELETE FROM favorites WHERE id = ?', [id]);
 }
+
+/** Szuka produktu w LOKALNEJ bazie po kodzie (z wariantami UPC/EAN). */
+export async function findLocalByBarcode(
+  barcode: string,
+): Promise<FavoriteRow | null> {
+  const c = barcode.trim().replace(/\s+/g, '');
+  if (c === '') return null;
+  const variants = [c];
+  if (/^\d{12}$/.test(c)) variants.push(`0${c}`);
+  if (/^\d{13}$/.test(c) && c.startsWith('0')) variants.push(c.slice(1));
+  const db = await getDb();
+  const placeholders = variants.map(() => '?').join(',');
+  const rows = await db.getAllAsync<FavoriteRow>(
+    `SELECT * FROM favorites WHERE kod IN (${placeholders}) LIMIT 1`,
+    variants,
+  );
+  return rows[0] ?? null;
+}

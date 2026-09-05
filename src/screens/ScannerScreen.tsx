@@ -17,7 +17,8 @@ import { insertMeal } from '../db/meals';
 import { insertFavorite, searchFavorites } from '../db/favorites';
 import { CATEGORIES, SOURCE_BARCODE } from '../lib/constants';
 import { fmtKcal, scaleMacros, todayKey } from '../lib/format';
-import { OffProduct, productByBarcode } from '../lib/off';
+import { OffProduct, offFromFavorite, productByBarcode } from '../lib/off';
+import { findLocalByBarcode } from '../db/favorites';
 import { RootStackParamList } from '../nav';
 import { aiConfigOf, useStore } from '../store/useStore';
 import { AiConfig } from '../lib/ai';
@@ -49,6 +50,7 @@ export function ScannerScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [fetching, setFetching] = useState(false);
   const [product, setProduct] = useState<OffProduct | null>(null);
+  const [fromLocal, setFromLocal] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [manualCode, setManualCode] = useState('');
   const [grams, setGrams] = useState(100);
@@ -61,10 +63,19 @@ export function ScannerScreen() {
     setFetching(true);
     setErr(null);
     setProduct(null);
+    setFromLocal(false);
     try {
+      // Najpierw MOJA baza (offline), potem Open Food Facts.
+      const local = await findLocalByBarcode(code).catch(() => null);
+      if (local) {
+        setProduct(offFromFavorite(local));
+        setFromLocal(true);
+        setGrams(100);
+        return;
+      }
       const p = await productByBarcode(code);
       if (!p) {
-        setErr(`Nie znaleziono produktu o kodzie ${code}.`);
+        setErr(`Nie znaleziono produktu o kodzie ${code} (ani lokalnie, ani online).`);
       } else {
         setProduct(p);
         setGrams(100);
@@ -271,6 +282,7 @@ export function ScannerScreen() {
             onPress={() => {
               setErr(null);
               setProduct(null);
+              setFromLocal(false);
             }}
             style={{
               backgroundColor: colors.primary,
@@ -300,7 +312,7 @@ export function ScannerScreen() {
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() =>
-              nav.navigate('AddMeal', { day: todayKey(), tab: 'label' })
+              nav.navigate('AddMeal', { day: todayKey(), tab: 'camera' })
             }
             style={{
               borderWidth: 1,
@@ -310,7 +322,7 @@ export function ScannerScreen() {
               paddingHorizontal: 24,
             }}>
             <Text style={{ color: colors.primary, fontWeight: '700' }}>
-              🏷️ Zrób zdjęcie etykiety (AI)
+              📷 Zrób zdjęcie (AI rozpozna)
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -354,6 +366,7 @@ export function ScannerScreen() {
               )}
               <Text style={{ color: colors.text, opacity: 0.75, fontSize: 12 }}>
                 Na 100 g: {fmtKcal(product.kcal100)}
+                {fromLocal ? '\n📦 Znaleziono w MOJEJ bazie (offline)' : ''}
               </Text>
             </View>
           </View>

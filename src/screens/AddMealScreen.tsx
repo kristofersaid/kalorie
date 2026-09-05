@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import * as ImagePicker from 'expo-image-picker';
 import { getDb, FavoriteRow, MealRow } from '../db/database';
 import { insertMeal, updateMeal } from '../db/meals';
 import {
@@ -25,7 +24,6 @@ import {
 } from '../lib/constants';
 import {
   dayKey,
-  fmtG,
   fmtKcal,
   parseDayKey,
   prettyDate,
@@ -34,15 +32,16 @@ import {
 } from '../lib/format';
 import { OffProduct, offErrorMessage, searchOff } from '../lib/off';
 import { choosePhoto } from '../lib/photo';
-import { AiConfig, AiIngredient, AiResult, LabelResult, analyzeImage, analyzeLabel } from '../lib/ai';
+import { AiConfig } from '../lib/ai';
 import { aiConfigOf, useStore } from '../store/useStore';
 import { RootStackParamList } from '../nav';
 import { CategoryChips } from '../components/CategoryChips';
 import { PortionPicker } from '../components/PortionPicker';
+import { SmartCapture } from '../components/SmartCapture';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddMeal'>;
 
-type Tab = 'manual' | 'search' | 'photo' | 'label';
+type Tab = 'manual' | 'search' | 'camera';
 
 function shiftDay(key: string, delta: number): string {
   const d = parseDayKey(key);
@@ -99,7 +98,7 @@ export function AddMealScreen({ navigation, route }: Props) {
   const editingId = route.params.mealId;
   const isEditing = editingId != null;
   const [tab, setTab] = useState<Tab>(
-    isEditing ? 'manual' : (route.params.tab ?? 'search'),
+    isEditing ? 'manual' : (route.params.tab ?? 'camera'),
   );
 
   // Formularz ręczny
@@ -172,8 +171,7 @@ export function AddMealScreen({ navigation, route }: Props) {
         <View style={{ flexDirection: 'row', padding: 12, gap: 8 }}>
           {(
             [
-              ['photo', '📸 Posiłek'],
-              ['label', '🏷️ Etykieta'],
+              ['camera', '📷 Aparat'],
               ['search', '🔍 Szukaj'],
             ] as [Tab, string][]
         ).map(([t, label]) => (
@@ -238,29 +236,19 @@ export function AddMealScreen({ navigation, route }: Props) {
           onCreateNew={() => navigation.navigate('Creator', {})}
         />
       )}
-      {tab === 'photo' && (
-        <PhotoTab
-          day={day}
-          category={category}
-          setCategory={setCategory}
-          cfg={aiCfg}
-          onAdded={() => {
-            bump();
-            navigation.goBack();
-          }}
-        />
-      )}
-      {tab === 'label' && (
-        <LabelTab
-          day={day}
-          category={category}
-          setCategory={setCategory}
-          cfg={aiCfg}
-          onAdded={() => {
-            bump();
-            navigation.goBack();
-          }}
-        />
+      {tab === 'camera' && !isEditing && (
+        <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+          <SmartCapture
+            cfg={aiCfg}
+            day={day}
+            category={category}
+            setCategory={setCategory}
+            showAdd
+            showSaveProduct={false}
+            showSaveDish={false}
+            onDone={() => navigation.goBack()}
+          />
+        </ScrollView>
       )}
     </View>
   );
@@ -746,419 +734,3 @@ function SearchTab(p: {
   );
 }
 
-// ── Zakładka zdjęcia (AI) ────────────────────────────────────
-
-function PhotoTab(p: {
-  day: string;
-  category: number;
-  setCategory: (i: number) => void;
-  cfg: AiConfig;
-  onAdded: () => void;
-}) {
-  const { colors } = useTheme();
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-  const [result, setResult] = useState<AiResult | null>(null);
-  const [items, setItems] = useState<AiIngredient[]>([]);
-
-  const pick = async (fromCamera: boolean) => {
-    if (p.cfg.apiKey.trim() === '') {
-      setErr('Najpierw wklej klucz API w Ustawieniach (sekcja AI).');
-      return;
-    }
-    try {
-      const res = fromCamera
-        ? await ImagePicker.launchCameraAsync({
-            quality: 0.6,
-            base64: true,
-            exif: false,
-          })
-        : await ImagePicker.launchImageLibraryAsync({
-            quality: 0.6,
-            base64: true,
-            exif: false,
-          });
-      if (res.canceled || !res.assets[0]?.base64) return;
-      setBusy(true);
-      setErr(null);
-      setResult(null);
-      const r = await analyzeImage(p.cfg, res.assets[0].base64);
-      setBusy(false);
-      if (r.error) {
-        setErr(r.error);
-        return;
-      }
-      setResult(r);
-      setItems(r.skladniki);
-    } catch {
-      setBusy(false);
-      setErr('Błąd analizy zdjęcia. Sprawdź internet i spróbuj ponownie.');
-    }
-  };
-
-  const toggle = (i: number) =>
-    setItems((prev) =>
-      prev.map((it, idx) => (idx === i ? { ...it, selected: !it.selected } : it)),
-    );
-
-  const chosen = items.filter((i) => i.selected);
-  const totKcal = chosen.reduce((s, i) => s + i.kcal, 0);
-  const totWaga = chosen.reduce((s, i) => s + i.waga, 0);
-
-  const save = async () => {
-    if (chosen.length === 0 || !result) return;
-    try {
-      for (const s of chosen) {
-        await insertMeal({
-          nazwa:
-            chosen.length > 1
-              ? `${result.danie} – ${s.nazwa}`
-              : result.danie || s.nazwa,
-          kcal: s.kcal,
-          bialko: s.bialko,
-          tluszcze: s.tluszcze,
-          wegle: s.wegle,
-          waga: s.waga,
-          kategoria: p.category,
-          dzien: p.day,
-          zrodlo: SOURCE_AI,
-        });
-      }
-      p.onAdded();
-    } catch {
-      Alert.alert('Błąd', 'Nie udało się zapisać posiłku.');
-    }
-  };
-
-  return (
-    <ScrollView contentContainerStyle={{ padding: 16, gap: 12 }}>
-      <Text style={{ textAlign: 'center', color: colors.text, opacity: 0.75 }}>
-        Zrób zdjęcie posiłku – AI (wybrany dostawca w Ustawieniach)
-        rozpozna składniki i oszacuje kalorie.
-      </Text>
-      {busy ? (
-        <View style={{ alignItems: 'center', padding: 24, gap: 12 }}>
-          <ActivityIndicator size="large" />
-          <Text style={{ color: colors.text }}>
-            Analizuję zdjęcie… to może potrwać chwilę.
-          </Text>
-        </View>
-      ) : (
-        <>
-          <TouchableOpacity
-            onPress={() => pick(true)}
-            style={{
-              backgroundColor: colors.primary,
-              borderRadius: 12,
-              padding: 14,
-              alignItems: 'center',
-            }}>
-            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>
-              📸 Zrób zdjęcie (aparat)
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => pick(false)}
-            style={{
-              borderWidth: 1,
-              borderColor: colors.primary,
-              borderRadius: 12,
-              padding: 14,
-              alignItems: 'center',
-            }}>
-            <Text style={{ color: colors.primary, fontWeight: '800', fontSize: 16 }}>
-              🖼️ Wybierz z galerii
-            </Text>
-          </TouchableOpacity>
-        </>
-      )}
-      {err && (
-        <View
-          style={{ backgroundColor: '#ffebee', borderRadius: 10, padding: 10 }}>
-          <Text style={{ color: '#b71c1c' }}>{err}</Text>
-        </View>
-      )}
-      {result && (
-        <View
-          style={{
-            backgroundColor: colors.card,
-            borderRadius: 12,
-            padding: 12,
-            borderWidth: 1,
-            borderColor: colors.border,
-            gap: 8,
-          }}>
-          <Text style={{ fontSize: 17, fontWeight: '800', color: colors.text }}>
-            {result.danie}
-          </Text>
-          <Text style={{ color: colors.text, fontWeight: '600' }}>
-            Zaznaczone: {fmtKcal(totKcal)} • {fmtG(totWaga)}
-          </Text>
-          {items.map((it, i) => (
-            <TouchableOpacity
-              key={i}
-              onPress={() => toggle(i)}
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <View
-                style={{
-                  width: 22,
-                  height: 22,
-                  borderRadius: 6,
-                  borderWidth: 2,
-                  borderColor: colors.primary,
-                  backgroundColor: it.selected ? colors.primary : 'transparent',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}>
-                {it.selected && (
-                  <Text style={{ color: '#fff', fontSize: 14 }}>✓</Text>
-                )}
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: colors.text, fontWeight: '600' }}>
-                  {it.nazwa} ({fmtG(it.waga)})
-                </Text>
-                <Text style={{ fontSize: 12, color: colors.text, opacity: 0.7 }}>
-                  {fmtKcal(it.kcal)} • B:{it.bialko.toFixed(1)} T:
-                  {it.tluszcze.toFixed(1)} W:{it.wegle.toFixed(1)}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-          <TouchableOpacity
-            onPress={save}
-            disabled={chosen.length === 0}
-            style={{
-              backgroundColor: chosen.length === 0 ? colors.border : colors.primary,
-              borderRadius: 12,
-              padding: 14,
-              alignItems: 'center',
-              marginTop: 4,
-            }}>
-            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>
-              Dodaj zaznaczone ({chosen.length})
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
-      <Text style={{ color: colors.text, fontWeight: '600' }}>
-        Kategoria posiłku:
-      </Text>
-      <CategoryChips value={p.category} onChange={p.setCategory} />
-      <Text style={{ color: colors.text, opacity: 0.6 }}>
-        Dzień: {prettyDate(parseDayKey(p.day))} ({CATEGORIES[p.category]})
-      </Text>
-    </ScrollView>
-  );
-}
-
-// ── Zakładka etykiety (zdjęcie tabeli wartości odżywczych) ───
-
-function LabelTab(p: {
-  day: string;
-  category: number;
-  setCategory: (i: number) => void;
-  cfg: AiConfig;
-  onAdded: () => void;
-}) {
-  const { colors } = useTheme();
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-  const [scanned, setScanned] = useState(false);
-  const [name, setName] = useState('');
-  const [kcal, setKcal] = useState('');
-  const [b, setB] = useState('');
-  const [t, setT] = useState('');
-  const [w, setW] = useState('');
-  const [grams, setGrams] = useState(100);
-  const [extras, setExtras] = useState<{ label: string; grams: number }[]>([]);
-  const [opakG, setOpakG] = useState<number | null>(null);
-
-  const pick = async (fromCamera: boolean) => {
-    if (p.cfg.apiKey.trim() === '') {
-      setErr('Najpierw wklej klucz API w Ustawieniach (sekcja AI).');
-      return;
-    }
-    try {
-      const res = fromCamera
-        ? await ImagePicker.launchCameraAsync({
-            quality: 0.8,
-            base64: true,
-            exif: false,
-          })
-        : await ImagePicker.launchImageLibraryAsync({
-            quality: 0.8,
-            base64: true,
-            exif: false,
-          });
-      if (res.canceled || !res.assets[0]?.base64) return;
-      setBusy(true);
-      setErr(null);
-      const r: LabelResult = await analyzeLabel(p.cfg, res.assets[0].base64);
-      setBusy(false);
-      if (r.error) {
-        setErr(r.error);
-        return;
-      }
-      setName(r.nazwa);
-      setKcal(String(r.kcal100));
-      setB(String(r.bialko100));
-      setT(String(r.tluszcze100));
-      setW(String(r.wegle100));
-      const chips: { label: string; grams: number }[] = [];
-      if (r.opakowanieG) {
-        chips.push({
-          label: `Całość (${r.opakowanieG} g)`,
-          grams: r.opakowanieG,
-        });
-      }
-      if (r.porcjaG && r.porcjaG !== r.opakowanieG) {
-        chips.push({
-          label: `1 porcja (${r.porcjaG} g)`,
-          grams: r.porcjaG,
-        });
-      }
-      setExtras(chips);
-      setOpakG(r.opakowanieG ?? null);
-      setGrams(100);
-      setScanned(true);
-    } catch {
-      setBusy(false);
-      setErr('Błąd analizy zdjęcia. Sprawdź internet i spróbuj ponownie.');
-    }
-  };
-
-  const save = async () => {
-    if (name.trim() === '') {
-      Alert.alert('Uwaga', 'Wpisz nazwę produktu.');
-      return;
-    }
-    if (grams <= 0) {
-      Alert.alert('Uwaga', 'Podaj, ile gramów zjadłeś.');
-      return;
-    }
-    const s = scaleMacros(
-      toDouble(kcal),
-      toDouble(b),
-      toDouble(t),
-      toDouble(w),
-      grams,
-    );
-    try {
-      await insertMeal({
-        nazwa: name,
-        kcal: s.kcal,
-        bialko: s.bialko,
-        tluszcze: s.tluszcze,
-        wegle: s.wegle,
-        waga: grams,
-        kategoria: p.category,
-        dzien: p.day,
-        zrodlo: SOURCE_AI,
-      });
-      await rememberProduct({
-        nazwa: name,
-        kcal100: toDouble(kcal),
-        bialko100: toDouble(b),
-        tluszcze100: toDouble(t),
-        wegle100: toDouble(w),
-        opakowanieG: opakG,
-      });
-      p.onAdded();
-    } catch {
-      Alert.alert('Błąd', 'Nie udało się dodać posiłku.');
-    }
-  };
-
-  return (
-    <ScrollView contentContainerStyle={{ padding: 16, gap: 12 }}>
-      <Text style={{ textAlign: 'center', color: colors.text, opacity: 0.75 }}>
-        Zrób zdjęcie tabeli wartości odżywczych z opakowania. AI odczyta
-        wartości na 100 g, a Ty wpiszesz, ile gramów zjadłeś.
-      </Text>
-      {busy ? (
-        <View style={{ alignItems: 'center', padding: 24, gap: 12 }}>
-          <ActivityIndicator size="large" />
-          <Text style={{ color: colors.text }}>
-            Odczytuję tabelę… to może potrwać chwilę.
-          </Text>
-        </View>
-      ) : (
-        <>
-          <TouchableOpacity
-            onPress={() => pick(true)}
-            style={{
-              backgroundColor: colors.primary,
-              borderRadius: 12,
-              padding: 14,
-              alignItems: 'center',
-            }}>
-            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>
-              📸 Zrób zdjęcie etykiety
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => pick(false)}
-            style={{
-              borderWidth: 1,
-              borderColor: colors.primary,
-              borderRadius: 12,
-              padding: 14,
-              alignItems: 'center',
-            }}>
-            <Text style={{ color: colors.primary, fontWeight: '800', fontSize: 16 }}>
-              🖼️ Wybierz z galerii
-            </Text>
-          </TouchableOpacity>
-        </>
-      )}
-      {err && (
-        <View
-          style={{ backgroundColor: '#ffebee', borderRadius: 10, padding: 10 }}>
-          <Text style={{ color: '#b71c1c' }}>{err}</Text>
-        </View>
-      )}
-      {scanned && !busy && (
-        <>
-          <Text style={{ color: colors.text, fontWeight: '700' }}>
-            Odczytane wartości (na 100 g) — sprawdź i popraw:
-          </Text>
-          <Field label="Nazwa produktu *" value={name} onChange={setName} />
-          <View style={{ flexDirection: 'row', gap: 10 }}>
-            <Field label="Kcal /100 g" value={kcal} onChange={setKcal} numeric />
-            <Field label="Białko /100 g" value={b} onChange={setB} numeric />
-          </View>
-          <View style={{ flexDirection: 'row', gap: 10 }}>
-            <Field label="Tłuszcze /100 g" value={t} onChange={setT} numeric />
-            <Field label="Węgle /100 g" value={w} onChange={setW} numeric />
-          </View>
-          <PortionPicker
-            kcal100={toDouble(kcal)}
-            bialko100={toDouble(b)}
-            tluszcze100={toDouble(t)}
-            wegle100={toDouble(w)}
-            grams={grams}
-            setGrams={setGrams}
-            extraChips={extras}
-          />
-          <Text style={{ color: colors.text, fontWeight: '600' }}>
-            Kategoria posiłku:
-          </Text>
-          <CategoryChips value={p.category} onChange={p.setCategory} />
-          <TouchableOpacity
-            onPress={save}
-            style={{
-              backgroundColor: colors.primary,
-              borderRadius: 12,
-              padding: 14,
-              alignItems: 'center',
-            }}>
-            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>
-              Dodaj ({Math.round(grams)} g)
-            </Text>
-          </TouchableOpacity>
-        </>
-      )}
-    </ScrollView>
-  );
-}

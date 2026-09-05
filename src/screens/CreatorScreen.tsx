@@ -15,7 +15,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { FavoriteRow, getDb } from '../db/database';
-import { insertFavorite, updateFavorite } from '../db/favorites';
+import { findLocalByBarcode, insertFavorite, updateFavorite } from '../db/favorites';
 import { AiConfig, analyzeImage, analyzeLabel } from '../lib/ai';
 import { fmtKcal, toDouble } from '../lib/format';
 import { offErrorMessage, productByBarcode } from '../lib/off';
@@ -57,6 +57,7 @@ export function CreatorScreen({ navigation, route }: Props) {
   const [scanning, setScanning] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const scanLock = useRef(false);
+  const paramEditId = useRef<number | null>(null);
 
   useEffect(() => {
     const id = route.params?.editProductId;
@@ -69,6 +70,7 @@ export function CreatorScreen({ navigation, route }: Props) {
           [id],
         );
         if (row) {
+          paramEditId.current = row.id;
           setEditId(row.id);
           setName(row.nazwa);
           setKcal(String(row.kcal100));
@@ -205,7 +207,7 @@ export function CreatorScreen({ navigation, route }: Props) {
     });
   };
 
-  /** Lookup kodu → wypełnia formularz. */
+  /** Lookup kodu → wypełnia formularz (najpierw MOJA baza, potem OFF). */
   const lookupCode = async (raw: string) => {
     const c = raw.trim();
     if (c === '') return;
@@ -213,11 +215,36 @@ export function CreatorScreen({ navigation, route }: Props) {
     setErr(null);
     setInfo(null);
     try {
-      const p = await productByBarcode(c);
-      if (!p) {
-        setErr(`Nie znaleziono kodu ${c} w Open Food Facts. Uzupełnij dane ręcznie.`);
+      const local = await findLocalByBarcode(c).catch(() => null);
+      if (local) {
+        setEditId(local.id);
+        setCode(c);
+        setName(local.nazwa);
+        setKcal(String(local.kcal100));
+        setB(String(local.bialko100));
+        setT(String(local.tluszcze100));
+        setW(String(local.wegle100));
+        setPhoto(local.zdjecie ?? null);
+        setDefCat(local.kategoria);
+        setTotalW(
+          local.opakowanie_g != null && local.opakowanie_g > 0
+            ? String(Math.round(local.opakowanie_g))
+            : '',
+        );
+        setInfo(
+          `Kod jest już w MOJEJ bazie — edytujesz istniejący wpis. Zapisz, aby zaktualizować.`,
+        );
         return;
       }
+      const p = await productByBarcode(c);
+      if (!p) {
+        setEditId(null);
+        setErr(
+          `Nie znaleziono kodu ${c} (ani lokalnie, ani w Open Food Facts). Uzupełnij dane ręcznie.`,
+        );
+        return;
+      }
+      setEditId(null);
       setCode(c);
       setName((prev) => (prev.trim() === '' ? p.nazwa : prev));
       setKcal(String(p.kcal100));
@@ -442,7 +469,13 @@ export function CreatorScreen({ navigation, route }: Props) {
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <TextInput
           value={code}
-          onChangeText={setCode}
+          onChangeText={(t) => {
+            setCode(t);
+            // Zmiana kodu po dopasowaniu lokalnym = nowy wpis, nie nadpisanie.
+            if (editId != null && editId !== paramEditId.current) {
+              setEditId(null);
+            }
+          }}
           placeholder="np. 5901234567890"
           placeholderTextColor={colors.text + '66'}
           keyboardType="numeric"

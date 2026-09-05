@@ -1,5 +1,6 @@
 import { OFF_PRODUCT_URL, OFF_SEARCH_URL } from './constants';
 import { toDouble } from './format';
+import { FavoriteRow } from '../db/database';
 
 export type OffProduct = {
   nazwa: string;
@@ -167,6 +168,24 @@ export async function searchOff(query: string): Promise<OffProduct[]> {
     }
   }
   return out;
+}
+
+/** Mapuje wiersz lokalnej bazy na produkt (do wspólnego UI porcji). */
+export function offFromFavorite(f: FavoriteRow): OffProduct {
+  return {
+    nazwa: f.nazwa,
+    kcal100: f.kcal100,
+    bialko100: f.bialko100,
+    tluszcze100: f.tluszcze100,
+    wegle100: f.wegle100,
+    kod: f.kod,
+    zdjecie: f.zdjecie,
+    opakowanieG:
+      f.opakowanie_g != null && f.opakowanie_g > 0
+        ? Math.round(f.opakowanie_g)
+        : null,
+    porcjaG: null,
+  };
 }
 
 /** Pobranie produktu po kodzie EAN. Zwraca null, gdy nie znaleziono. */

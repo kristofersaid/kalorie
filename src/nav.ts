@@ -6,7 +6,7 @@ export type TabParamList = {
   Ustawienia: undefined;
 };
 
-export type AddMealTab = 'manual' | 'search' | 'photo' | 'label';
+export type AddMealTab = 'manual' | 'search' | 'camera';
 
 export type RootStackParamList = {
   Tabs: undefined;

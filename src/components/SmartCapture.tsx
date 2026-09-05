@@ -12,7 +12,7 @@ import {
 import { useTheme } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { insertMeal } from '../db/meals';
-import { insertFavorite, searchFavorites } from '../db/favorites';
+import { findLocalByBarcode, insertFavorite, searchFavorites } from '../db/favorites';
 import { createTemplate, TemplateItemInput } from '../db/templates';
 import {
   AiConfig,
@@ -30,7 +30,7 @@ import {
   scaleMacros,
   toDouble,
 } from '../lib/format';
-import { OffProduct, offErrorMessage, productByBarcode } from '../lib/off';
+import { OffProduct, offErrorMessage, offFromFavorite, productByBarcode } from '../lib/off';
 import { useStore } from '../store/useStore';
 import { CategoryChips } from './CategoryChips';
 import { PortionPicker } from './PortionPicker';
@@ -137,6 +137,13 @@ export function SmartCapture({
       if (kind.type === 'kod') {
         setPhase({ kind: 'working', label: 'Szukam produktu po kodzie…' });
         try {
+          // Najpierw MOJA baza (offline), potem Open Food Facts.
+          const local = await findLocalByBarcode(kind.kod).catch(() => null);
+          if (local) {
+            setGrams(100);
+            setPhase({ kind: 'barcode', product: offFromFavorite(local) });
+            return;
+          }
           const product = await productByBarcode(kind.kod);
           if (!product) {
             setPhase({
