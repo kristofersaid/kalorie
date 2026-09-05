@@ -31,6 +31,7 @@ import {
   toDouble,
 } from '../lib/format';
 import { OffProduct, offErrorMessage, offFromFavorite, productByBarcode } from '../lib/off';
+import { searchUsda } from '../lib/usda';
 import { useStore } from '../store/useStore';
 import { CategoryChips } from './CategoryChips';
 import { PortionPicker } from './PortionPicker';
@@ -144,11 +145,17 @@ export function SmartCapture({
             setPhase({ kind: 'barcode', product: offFromFavorite(local) });
             return;
           }
-          const product = await productByBarcode(kind.kod);
+          const product = await productByBarcode(kind.kod).catch(() => null);
           if (!product) {
+            const u = await searchUsda(kind.kod).catch(() => []);
+            if (u.length > 0) {
+              setGrams(100);
+              setPhase({ kind: 'barcode', product: u[0] });
+              return;
+            }
             setPhase({
               kind: 'error',
-              message: `Odczytano kod ${kind.kod}, ale nie ma go w bazie Open Food Facts.`,
+              message: `Odczytano kod ${kind.kod}, ale nie ma go w bazach online.`,
             });
             return;
           }

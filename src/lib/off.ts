@@ -75,7 +75,7 @@ function fromJson(
  * "porcja 30 g". Zwraca null, gdy nie da się odczytać.
  * Mililitry traktowane są jak gramy (przybliżenie dla płynów).
  */
-function parseGrams(text: unknown): number | null {
+export function parseGrams(text: unknown): number | null {
   if (typeof text !== 'string') return null;
   // Najpierw multipaki: "6 x 25 g" -> 150.
   const multi = text.match(

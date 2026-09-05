@@ -15,6 +15,7 @@ import { wipeAll } from '../db/database';
 import { exportCsv, importCsv } from '../lib/csv';
 import { AI_PROVIDERS, AiProviderId, listGoogleModels, providerInfo } from '../lib/ai';
 import { offErrorMessage, searchOff } from '../lib/off';
+import { searchUsda, usdaErrorMessage } from '../lib/usda';
 import { useStore, ThemeChoice } from '../store/useStore';
 
 export function SettingsScreen() {
@@ -96,6 +97,14 @@ export function SettingsScreen() {
       );
     } catch (e) {
       lines.push(`❌ Open Food Facts: ${offErrorMessage(e)}`);
+    }
+    try {
+      const r = await searchUsda('pepsi');
+      lines.push(
+        `✅ USDA FoodData: połączenie OK (przykładowy wynik: "${r[0]?.nazwa ?? '—'}")`,
+      );
+    } catch (e) {
+      lines.push(`❌ USDA FoodData: ${usdaErrorMessage(e)}`);
     }
     if (aiProvider === 'google') {
       const k = key.trim() !== '' ? key.trim() : storedKeyFor(aiProvider);

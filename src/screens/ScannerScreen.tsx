@@ -18,6 +18,7 @@ import { insertFavorite, searchFavorites } from '../db/favorites';
 import { CATEGORIES, SOURCE_BARCODE } from '../lib/constants';
 import { fmtKcal, scaleMacros, todayKey } from '../lib/format';
 import { OffProduct, offFromFavorite, productByBarcode } from '../lib/off';
+import { searchUsda } from '../lib/usda';
 import { findLocalByBarcode } from '../db/favorites';
 import { RootStackParamList } from '../nav';
 import { aiConfigOf, useStore } from '../store/useStore';
@@ -50,7 +51,7 @@ export function ScannerScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [fetching, setFetching] = useState(false);
   const [product, setProduct] = useState<OffProduct | null>(null);
-  const [fromLocal, setFromLocal] = useState(false);
+  const [sourceNote, setSourceNote] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [manualCode, setManualCode] = useState('');
   const [grams, setGrams] = useState(100);
@@ -63,22 +64,46 @@ export function ScannerScreen() {
     setFetching(true);
     setErr(null);
     setProduct(null);
-    setFromLocal(false);
+    setSourceNote(null);
     try {
-      // Najpierw MOJA baza (offline), potem Open Food Facts.
+      // 1) MOJA baza (offline), 2) Open Food Facts, 3) USDA FoodData.
+      let offNetFail = false;
+      let usdaNetFail = false;
       const local = await findLocalByBarcode(code).catch(() => null);
       if (local) {
         setProduct(offFromFavorite(local));
-        setFromLocal(true);
+        setSourceNote('📦 Znaleziono w MOJEJ bazie (offline)');
         setGrams(100);
         return;
       }
-      const p = await productByBarcode(code);
-      if (!p) {
-        setErr(`Nie znaleziono produktu o kodzie ${code} (ani lokalnie, ani online).`);
-      } else {
+      const p = await productByBarcode(code).catch((e: unknown) => {
+        const m = e instanceof Error ? e.message : String(e);
+        offNetFail =
+          m.startsWith('OFF_NET') || m.startsWith('OFF_TIMEOUT');
+        return null;
+      });
+      if (p) {
         setProduct(p);
+        setSourceNote(null);
         setGrams(100);
+        return;
+      }
+      const u = await searchUsda(code).catch((e: unknown) => {
+        const m = e instanceof Error ? e.message : String(e);
+        usdaNetFail =
+          m.startsWith('USDA_NET') || m.startsWith('USDA_TIMEOUT');
+        return [];
+      });
+      if (u.length > 0) {
+        setProduct(u[0]);
+        setSourceNote('🇺🇸 Znaleziono w USDA FoodData (USA)');
+        setGrams(100);
+        return;
+      }
+      if (offNetFail && usdaNetFail) {
+        setErr('Brak połączenia z internetem. Sprawdź Wi-Fi/dane i spróbuj ponownie.');
+      } else {
+        setErr(`Nie znaleziono produktu o kodzie ${code} (ani lokalnie, ani online).`);
       }
     } catch {
       setErr('Błąd pobierania produktu. Sprawdź internet.');
@@ -282,7 +307,7 @@ export function ScannerScreen() {
             onPress={() => {
               setErr(null);
               setProduct(null);
-              setFromLocal(false);
+              setSourceNote(null);
             }}
             style={{
               backgroundColor: colors.primary,
@@ -366,7 +391,7 @@ export function ScannerScreen() {
               )}
               <Text style={{ color: colors.text, opacity: 0.75, fontSize: 12 }}>
                 Na 100 g: {fmtKcal(product.kcal100)}
-                {fromLocal ? '\n📦 Znaleziono w MOJEJ bazie (offline)' : ''}
+                {sourceNote ? `\n${sourceNote}` : ''}
               </Text>
             </View>
           </View>
@@ -406,6 +431,7 @@ export function ScannerScreen() {
               onPress={() => {
                 setProduct(null);
                 setErr(null);
+                setSourceNote(null);
               }}
               style={{
                 flex: 1,

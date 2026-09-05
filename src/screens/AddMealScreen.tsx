@@ -31,6 +31,7 @@ import {
   toDouble,
 } from '../lib/format';
 import { OffProduct, offErrorMessage, searchOff } from '../lib/off';
+import { searchUsda, usdaErrorMessage } from '../lib/usda';
 import { choosePhoto } from '../lib/photo';
 import { AiConfig } from '../lib/ai';
 import { aiConfigOf, useStore } from '../store/useStore';
@@ -408,6 +409,8 @@ function SearchTab(p: {
   const [err, setErr] = useState<string | null>(null);
   const [local, setLocal] = useState<FavoriteRow[]>([]);
   const [remote, setRemote] = useState<OffProduct[]>([]);
+  const [usda, setUsda] = useState<OffProduct[]>([]);
+  const [usdaErr, setUsdaErr] = useState<string | null>(null);
   const [picked, setPicked] = useState<
     | ({
         nazwa: string;
@@ -430,20 +433,34 @@ function SearchTab(p: {
     if (needle === '') {
       setLocal(await searchFavorites('').catch(() => []));
       setRemote([]);
+      setUsda([]);
+      setUsdaErr(null);
       setErr(null);
       setBusy(false);
       return;
     }
     setBusy(true);
     setErr(null);
+    setUsdaErr(null);
     setLocal(await searchFavorites(needle).catch(() => []));
-    try {
-      setRemote(await searchOff(needle));
-    } catch (e) {
-      setErr(`${offErrorMessage(e)} Wyniki lokalne nadal dostępne.`);
-    } finally {
-      setBusy(false);
+    // Oba źródła online niezależnie — pad jednego nie blokuje drugiego.
+    const [offRes, usdaRes] = await Promise.allSettled([
+      searchOff(needle),
+      searchUsda(needle),
+    ]);
+    if (offRes.status === 'fulfilled') {
+      setRemote(offRes.value);
+    } else {
+      setRemote([]);
+      setErr(`${offErrorMessage(offRes.reason)} Wyniki lokalne nadal dostępne.`);
     }
+    if (usdaRes.status === 'fulfilled') {
+      setUsda(usdaRes.value);
+    } else {
+      setUsda([]);
+      setUsdaErr(usdaErrorMessage(usdaRes.reason));
+    }
+    setBusy(false);
   };
 
   useEffect(() => {
@@ -709,10 +726,50 @@ function SearchTab(p: {
           )}
         </>
       )}
-      {!busy && local.length === 0 && remote.length === 0 && (
+      {usdaErr && (
+        <Text
+          style={{
+            color: colors.text,
+            opacity: 0.6,
+            fontSize: 12,
+            marginTop: 8,
+          }}>
+          USDA: {usdaErr}
+        </Text>
+      )}
+      {usda.length > 0 && (
+        <>
+          <Text
+            style={{
+              fontWeight: '800',
+              color: colors.text,
+              marginBottom: 6,
+              marginTop: 8,
+            }}>
+            USDA FoodData (USA):
+          </Text>
+          {usda.map((r, i) =>
+            tile(
+              `u${i}${r.kod ?? ''}${r.nazwa}`,
+              r.nazwa,
+              r.kcal100,
+              r.bialko100,
+              r.tluszcze100,
+              r.wegle100,
+              r.zdjecie,
+              'USDA',
+              () => {
+                setPicked({ ...r, fromLocal: false });
+                setGrams(100);
+              },
+            ),
+          )}
+        </>
+      )}
+      {!busy && local.length === 0 && remote.length === 0 && usda.length === 0 && (
         <Text style={{ textAlign: 'center', color: colors.text, opacity: 0.6, marginTop: 24 }}>
           {q.trim() === ''
-            ? 'Wpisz nazwę produktu, aby przeszukać MOJĄ bazę i Open Food Facts.'
+            ? 'Wpisz nazwę produktu, aby przeszukać MOJĄ bazę, Open Food Facts i USDA.'
             : 'Brak wyników tutaj.'}
         </Text>
       )}

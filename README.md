@@ -4,7 +4,9 @@ Prywatna aplikacja mobilna do liczenia kalorii — **Expo (React Native + TypeSc
 
 Zero kont, zero logowania, zero analityki. Wszystkie dane na telefonie (SQLite).
 Internet używany wyłącznie do AI (rozpoznawanie jedzenia ze zdjęć) oraz
-Open Food Facts (wyszukiwanie produktów i kody kreskowe).
+baz produktowych: **Open Food Facts** (główna) i **USDA FoodData** (zapasowa).
+Bez sieci działa wszystko inne — a wyszukiwanie i skaner najpierw sprawdzają
+lokalną bazę na telefonie.
 
 ## ✨ Funkcje
 

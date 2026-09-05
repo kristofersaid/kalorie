@@ -16,6 +16,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { FavoriteRow, getDb } from '../db/database';
 import { findLocalByBarcode, insertFavorite, updateFavorite } from '../db/favorites';
+import { searchUsda } from '../lib/usda';
 import { AiConfig, analyzeImage, analyzeLabel } from '../lib/ai';
 import { fmtKcal, toDouble } from '../lib/format';
 import { offErrorMessage, productByBarcode } from '../lib/off';
@@ -236,11 +237,27 @@ export function CreatorScreen({ navigation, route }: Props) {
         );
         return;
       }
-      const p = await productByBarcode(c);
+      const p = await productByBarcode(c).catch(() => null);
       if (!p) {
+        const u = await searchUsda(c).catch(() => []);
+        if (u.length > 0) {
+          const f = u[0];
+          setEditId(null);
+          setCode(f.kod ?? c);
+          setName((prev) => (prev.trim() === '' ? f.nazwa : prev));
+          setKcal(String(f.kcal100));
+          setB(String(f.bialko100));
+          setT(String(f.tluszcze100));
+          setW(String(f.wegle100));
+          if (f.opakowanieG) setTotalW(String(f.opakowanieG));
+          setInfo(
+            `Znaleziono w USDA FoodData (USA): ${f.nazwa}. Sprawdź liczby — baza amerykańska.`,
+          );
+          return;
+        }
         setEditId(null);
         setErr(
-          `Nie znaleziono kodu ${c} (ani lokalnie, ani w Open Food Facts). Uzupełnij dane ręcznie.`,
+          `Nie znaleziono kodu ${c} (ani lokalnie, ani w Open Food Facts, ani w USDA). Bez internetu uzupełnij dane ręcznie.`,
         );
         return;
       }
