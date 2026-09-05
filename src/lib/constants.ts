@@ -4,6 +4,7 @@ export const CATEGORIES = [
   'Obiad',
   'Kolacja',
   'Przekąski',
+  'Napoje',
 ] as const;
 
 export const DEFAULT_KCAL_GOAL = 2000;

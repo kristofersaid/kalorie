@@ -1,5 +1,5 @@
 import { getDb, MealRow } from './database';
-import { SOURCE_MANUAL } from '../lib/constants';
+import { CATEGORIES, SOURCE_MANUAL } from '../lib/constants';
 
 export type MealInput = {
   nazwa: string;
@@ -105,11 +105,12 @@ export function totalsOf(rows: MealRow[]): Totals {
   return { kcal, bialko, tluszcze, wegle };
 }
 
-/** Grupuje wpisy wg kategorii 0..4. */
+/** Grupuje wpisy wg kategorii (indeksy z CATEGORIES). */
 export function groupByCategory(rows: MealRow[]): MealRow[][] {
-  const groups: MealRow[][] = [[], [], [], [], []];
+  const groups: MealRow[][] = CATEGORIES.map(() => []);
+  const last = CATEGORIES.length - 1;
   for (const m of rows) {
-    const k = m.kategoria >= 0 && m.kategoria < 5 ? m.kategoria : 4;
+    const k = m.kategoria >= 0 && m.kategoria < CATEGORIES.length ? m.kategoria : last;
     groups[k].push(m);
   }
   return groups;
