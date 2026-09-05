@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -13,6 +13,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as Sharing from 'expo-sharing';
 import { wipeAll } from '../db/database';
 import { exportCsv, importCsv } from '../lib/csv';
+import { AI_PROVIDERS, AiProviderId, providerInfo } from '../lib/ai';
 import { useStore, ThemeChoice } from '../store/useStore';
 
 export function SettingsScreen() {
@@ -22,20 +23,41 @@ export function SettingsScreen() {
   const fatGoal = useStore((s) => s.fatGoal);
   const carbsGoal = useStore((s) => s.carbsGoal);
   const apiKey = useStore((s) => s.apiKey);
+  const aiProvider = useStore((s) => s.aiProvider);
+  const aiKeys = useStore((s) => s.aiKeys);
+  const aiModels = useStore((s) => s.aiModels);
   const theme = useStore((s) => s.theme);
   const setGoals = useStore((s) => s.setGoals);
-  const setApiKey = useStore((s) => s.setApiKey);
+  const setAiProvider = useStore((s) => s.setAiProvider);
+  const setAiKey = useStore((s) => s.setAiKey);
+  const setAiModel = useStore((s) => s.setAiModel);
   const setTheme = useStore((s) => s.setTheme);
   const bump = useStore((s) => s.bump);
+
+  const storedKeyFor = (p: AiProviderId): string => {
+    const k = aiKeys[p] || '';
+    if (k !== '') return k;
+    // Zgodność wsteczna: wcześniej klucz Google trzymany był w polu apiKey.
+    return p === 'google' ? apiKey : '';
+  };
+
+  const [key, setKey] = useState(storedKeyFor(aiProvider));
+  const [model, setModel] = useState(aiModels[aiProvider] || '');
+  const [showKey, setShowKey] = useState(false);
 
   const [kcal, setKcal] = useState(String(Math.round(kcalGoal)));
   const [prot, setProt] = useState(String(Math.round(proteinGoal)));
   const [fat, setFat] = useState(String(Math.round(fatGoal)));
   const [carbs, setCarbs] = useState(String(Math.round(carbsGoal)));
-  const [key, setKey] = useState(apiKey);
-  const [showKey, setShowKey] = useState(false);
   const [busy, setBusy] = useState(false);
   const [wipeArmed, setWipeArmed] = useState(false);
+
+  // Przeładowanie pól AI po zmianie dostawcy.
+  useEffect(() => {
+    setKey(storedKeyFor(aiProvider));
+    setModel(aiModels[aiProvider] || '');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiProvider]);
 
   const num = (t: string, fb: number): number => {
     const n = parseFloat(t.replace(',', '.'));
@@ -70,11 +92,14 @@ export function SettingsScreen() {
     Alert.alert('Gotowe', 'Zapisano cele.');
   };
 
-  const saveKey = () => {
-    setApiKey(key);
+  const saveAi = () => {
+    setAiKey(aiProvider, key);
+    setAiModel(aiProvider, model);
     Alert.alert(
       'Gotowe',
-      key.trim() === '' ? 'Usunięto klucz API.' : 'Zapisano klucz API.',
+      key.trim() === ''
+        ? `Usunięto klucz (${providerInfo(aiProvider).label}).`
+        : `Zapisano ustawienia AI (${providerInfo(aiProvider).label}).`,
     );
   };
 
@@ -202,21 +227,77 @@ export function SettingsScreen() {
       </View>
 
       <Text style={{ fontSize: 17, fontWeight: '800', color: colors.text }}>
-        Gemini AI (klucz API)
+        Sztuczna inteligencja (zdjęcia)
       </Text>
       <View style={cardStyle}>
         <Text style={{ color: colors.text, opacity: 0.75, fontSize: 13 }}>
-          Klucz znajdziesz w Google AI Studio (aistudio.google.com → Get API
-          key). Przechowywany jest tylko na tym telefonie.
+          Wybierz dostawcę AI do rozpoznawania posiłków i etykiet. Klucze
+          przechowywane są tylko na tym telefonie.
+        </Text>
+        {AI_PROVIDERS.map((p) => {
+          const active = aiProvider === p.id;
+          return (
+            <TouchableOpacity
+              key={p.id}
+              onPress={() => setAiProvider(p.id)}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'flex-start',
+                gap: 10,
+                paddingVertical: 6,
+              }}>
+              <View
+                style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: 11,
+                  borderWidth: 2,
+                  borderColor: colors.primary,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginTop: 2,
+                }}>
+                {active && (
+                  <View
+                    style={{
+                      width: 12,
+                      height: 12,
+                      borderRadius: 6,
+                      backgroundColor: colors.primary,
+                    }}
+                  />
+                )}
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    color: colors.text,
+                    fontSize: 15,
+                    fontWeight: active ? '800' : '400',
+                  }}>
+                  {p.label}
+                </Text>
+                <Text
+                  style={{ color: colors.text, opacity: 0.6, fontSize: 12 }}>
+                  {p.hint}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+        <Text style={{ color: colors.text, opacity: 0.75, fontSize: 13 }}>
+          Klucz dla {providerInfo(aiProvider).label}:{' '}
+          {providerInfo(aiProvider).keyUrl}
         </Text>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <TextInput
             value={key}
             onChangeText={setKey}
             secureTextEntry={!showKey}
-            placeholder="AIza…"
+            placeholder="Wklej klucz API…"
             placeholderTextColor={colors.text + '66'}
             autoCapitalize="none"
+            autoCorrect={false}
             style={{ ...inputStyle, flex: 1 }}
           />
           <TouchableOpacity
@@ -231,15 +312,27 @@ export function SettingsScreen() {
             <Text style={{ fontSize: 18 }}>{showKey ? '🙈' : '👁️'}</Text>
           </TouchableOpacity>
         </View>
+        <Text style={{ color: colors.text, marginTop: 2 }}>
+          Model (pusty = domyślny: {providerInfo(aiProvider).defaultModel})
+        </Text>
+        <TextInput
+          value={model}
+          onChangeText={setModel}
+          placeholder={providerInfo(aiProvider).defaultModel}
+          placeholderTextColor={colors.text + '66'}
+          autoCapitalize="none"
+          autoCorrect={false}
+          style={inputStyle}
+        />
         <TouchableOpacity
-          onPress={saveKey}
+          onPress={saveAi}
           style={{
             backgroundColor: colors.primary,
             borderRadius: 12,
             padding: 13,
             alignItems: 'center',
           }}>
-          <Text style={{ color: '#fff', fontWeight: '800' }}>Zapisz klucz</Text>
+          <Text style={{ color: '#fff', fontWeight: '800' }}>Zapisz ustawienia AI</Text>
         </TouchableOpacity>
       </View>
 

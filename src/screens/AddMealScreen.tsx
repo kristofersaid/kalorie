@@ -33,8 +33,8 @@ import {
   toDouble,
 } from '../lib/format';
 import { OffProduct, searchOff } from '../lib/off';
-import { AiIngredient, AiResult, LabelResult, analyzeImage, analyzeLabel } from '../lib/gemini';
-import { useStore } from '../store/useStore';
+import { AiConfig, AiIngredient, AiResult, LabelResult, analyzeImage, analyzeLabel } from '../lib/ai';
+import { aiConfigOf, useStore } from '../store/useStore';
 import { RootStackParamList } from '../nav';
 import { CategoryChips } from '../components/CategoryChips';
 import { PortionPicker } from '../components/PortionPicker';
@@ -83,7 +83,16 @@ async function rememberProduct(p: {
 export function AddMealScreen({ navigation, route }: Props) {
   const { colors } = useTheme();
   const bump = useStore((s) => s.bump);
-  const apiKey = useStore((s) => s.apiKey);
+  const aiProvider = useStore((s) => s.aiProvider);
+  const aiKeys = useStore((s) => s.aiKeys);
+  const aiModels = useStore((s) => s.aiModels);
+  const legacyKey = useStore((s) => s.apiKey);
+  const aiCfg: AiConfig = aiConfigOf({
+    aiProvider,
+    aiKeys,
+    aiModels,
+    apiKey: legacyKey,
+  });
   const [tab, setTab] = useState<Tab>('manual');
   const [day, setDay] = useState(route.params.day);
   const editingId = route.params.mealId;
@@ -222,7 +231,7 @@ export function AddMealScreen({ navigation, route }: Props) {
           day={day}
           category={category}
           setCategory={setCategory}
-          apiKey={apiKey}
+          cfg={aiCfg}
           onAdded={() => {
             bump();
             navigation.goBack();
@@ -234,7 +243,7 @@ export function AddMealScreen({ navigation, route }: Props) {
           day={day}
           category={category}
           setCategory={setCategory}
-          apiKey={apiKey}
+          cfg={aiCfg}
           onAdded={() => {
             bump();
             navigation.goBack();
@@ -652,7 +661,7 @@ function PhotoTab(p: {
   day: string;
   category: number;
   setCategory: (i: number) => void;
-  apiKey: string;
+  cfg: AiConfig;
   onAdded: () => void;
 }) {
   const { colors } = useTheme();
@@ -662,8 +671,8 @@ function PhotoTab(p: {
   const [items, setItems] = useState<AiIngredient[]>([]);
 
   const pick = async (fromCamera: boolean) => {
-    if (p.apiKey.trim() === '') {
-      setErr('Najpierw wklej klucz API Gemini w Ustawieniach.');
+    if (p.cfg.apiKey.trim() === '') {
+      setErr('Najpierw wklej klucz API w Ustawieniach (sekcja AI).');
       return;
     }
     try {
@@ -682,7 +691,7 @@ function PhotoTab(p: {
       setBusy(true);
       setErr(null);
       setResult(null);
-      const r = await analyzeImage(p.apiKey, res.assets[0].base64);
+      const r = await analyzeImage(p.cfg, res.assets[0].base64);
       setBusy(false);
       if (r.error) {
         setErr(r.error);
@@ -858,7 +867,7 @@ function LabelTab(p: {
   day: string;
   category: number;
   setCategory: (i: number) => void;
-  apiKey: string;
+  cfg: AiConfig;
   onAdded: () => void;
 }) {
   const { colors } = useTheme();
@@ -874,8 +883,8 @@ function LabelTab(p: {
   const [extras, setExtras] = useState<{ label: string; grams: number }[]>([]);
 
   const pick = async (fromCamera: boolean) => {
-    if (p.apiKey.trim() === '') {
-      setErr('Najpierw wklej klucz API Gemini w Ustawieniach.');
+    if (p.cfg.apiKey.trim() === '') {
+      setErr('Najpierw wklej klucz API w Ustawieniach (sekcja AI).');
       return;
     }
     try {
@@ -893,7 +902,7 @@ function LabelTab(p: {
       if (res.canceled || !res.assets[0]?.base64) return;
       setBusy(true);
       setErr(null);
-      const r: LabelResult = await analyzeLabel(p.apiKey, res.assets[0].base64);
+      const r: LabelResult = await analyzeLabel(p.cfg, res.assets[0].base64);
       setBusy(false);
       if (r.error) {
         setErr(r.error);

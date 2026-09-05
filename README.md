@@ -34,8 +34,10 @@ npx tsc --noEmit
 
 ## 2. Pierwsze kroki w aplikacji
 
-1. Zakładka **Ustawienia** → wklej **klucz API Gemini**
-   (https://aistudio.google.com → *Get API key*).
+1. Zakładka **Ustawienia** → sekcja **Sztuczna inteligencja** → wybierz
+   dostawcę (Google Gemini, OpenAI, xAI Grok, Anthropic Claude lub
+   OpenRouter), wklej **klucz API** i zapisz. Model możesz zostawić
+   domyślny albo wpisać własny.
 2. Ustaw cel kcal i makro (domyślnie 2000 kcal, B 150 g, T 65 g, W 250 g).
 3. Ekran główny → **+ Dodaj**.
 
