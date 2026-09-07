@@ -168,6 +168,12 @@ async function googleText(
       if (res.status === 400 && txt.includes('API key')) {
         return { error: 'Nieprawidłowy klucz API Google.' };
       }
+      if (res.status === 401 || res.status === 403) {
+        return {
+          error:
+            'Błąd 401: Google odrzuciło klucz. Wklej świeży klucz z AI Studio (zaczyna się od AIza) i sprawdź, czy nie ma nałożonych ograniczeń.',
+        };
+      }
       return {
         error: `Błąd Google Gemini (${res.status}). Sprawdź klucz, model i internet.`,
       };
@@ -369,6 +375,13 @@ export async function listGoogleModels(
     if (!res.ok) {
       if (res.status === 400) {
         return { models: [], error: 'Nieprawidłowy klucz API Google.' };
+      }
+      if (res.status === 401 || res.status === 403) {
+        return {
+          models: [],
+          error:
+            'Błąd 401: Google odrzuciło klucz. Wklej świeży klucz z AI Studio.',
+        };
       }
       return { models: [], error: `Błąd Google (${res.status}).` };
     }
