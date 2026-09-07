@@ -13,6 +13,7 @@ export type RootStackParamList = {
   AddMeal: { day: string; mealId?: number; tab?: AddMealTab };
   Creator: { editProductId?: number } | undefined;
   Activity: { day: string; activityId?: number };
+  Assistant: { autoAsk?: boolean } | undefined;
   Scanner: undefined;
   Stats: undefined;
 };

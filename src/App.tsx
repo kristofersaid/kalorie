@@ -18,6 +18,7 @@ import { FavoritesScreen } from './screens/FavoritesScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { AddMealScreen } from './screens/AddMealScreen';
 import { ActivityScreen } from './screens/ActivityScreen';
+import { AssistantScreen } from './screens/AssistantScreen';
 import { CreatorScreen } from './screens/CreatorScreen';
 import { ScannerScreen } from './screens/ScannerScreen';
 import { StatsScreen } from './screens/StatsScreen';
@@ -120,6 +121,11 @@ export default function App() {
           name="Activity"
           component={ActivityScreen}
           options={{ title: 'Aktywność', presentation: 'modal' }}
+        />
+        <Stack.Screen
+          name="Assistant"
+          component={AssistantScreen}
+          options={{ title: 'Asystent AI' }}
         />
         <Stack.Screen
           name="Scanner"

@@ -640,3 +640,217 @@ export async function classifyPhoto(
       return { type: 'brak', error: 'Nie rozpoznano jedzenia na zdjęciu.' };
   }
 }
+
+// ── Czat tekstowy (asystent diety) ───────────────────────────
+
+export type ChatMessage = {
+  role: 'user' | 'ai';
+  text: string;
+};
+
+async function googleChat(
+  cfg: AiConfig,
+  system: string,
+  history: ChatMessage[],
+): Promise<{ text?: string; error?: string }> {
+  try {
+    const contents = history.map((m) => ({
+      role: m.role === 'ai' ? 'model' : 'user',
+      parts: [{ text: m.text }],
+    }));
+    const res = await postJson(
+      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
+        resolveModel(cfg),
+      )}:generateContent?key=${encodeURIComponent(cfg.apiKey.trim())}`,
+      {},
+      {
+        system_instruction: { parts: [{ text: system }] },
+        contents,
+      },
+      60000,
+    );
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '');
+      if (res.status === 400 && txt.includes('API key')) {
+        return { error: 'Nieprawidłowy klucz API Google.' };
+      }
+      if (res.status === 404) {
+        return {
+          error: `Nie znaleziono modelu "${resolveModel(cfg)}". Wybierz model z listy w Ustawieniach.`,
+        };
+      }
+      return { error: `Błąd Google Gemini (${res.status}).` };
+    }
+    const data = (await res.json()) as {
+      candidates?: { content?: { parts?: { text?: string }[] } }[];
+    };
+    const text = data.candidates?.[0]?.content?.parts
+      ?.map((p) => p.text ?? '')
+      .join('')
+      .trim();
+    if (!text) return { error: 'Pusta odpowiedź z Gemini.' };
+    return { text };
+  } catch (e) {
+    return { error: errTimeout(e) ?? 'Brak internetu lub błąd połączenia.' };
+  }
+}
+
+async function openAiCompatibleChat(
+  cfg: AiConfig,
+  system: string,
+  history: ChatMessage[],
+  target: OpenAiCompatibleTarget,
+  label: string,
+): Promise<{ text?: string; error?: string }> {
+  try {
+    const res = await postJson(
+      target.baseUrl,
+      {
+        Authorization: `Bearer ${cfg.apiKey.trim()}`,
+        ...(target.extraHeaders ?? {}),
+      },
+      {
+        model: resolveModel(cfg),
+        max_tokens: 1024,
+        messages: [
+          { role: 'system', content: system },
+          ...history.map((m) => ({
+            role: m.role === 'ai' ? 'assistant' : 'user',
+            content: m.text,
+          })),
+        ],
+      },
+      60000,
+    );
+    if (!res.ok) {
+      if (res.status === 401 || res.status === 403) {
+        return { error: `Nieprawidłowy klucz API. ${target.badKeyHint}` };
+      }
+      if (res.status === 404) {
+        return {
+          error: `Nie znaleziono modelu "${resolveModel(cfg)}". Sprawdź nazwę w Ustawieniach.`,
+        };
+      }
+      const txt = await res.text().catch(() => '');
+      return {
+        error: `Błąd ${extractApiMessage(txt) ?? label + ' (' + res.status + ')'}.`,
+      };
+    }
+    const data = (await res.json()) as {
+      choices?: { message?: { content?: unknown } }[];
+    };
+    const content = data.choices?.[0]?.message?.content;
+    const text = (typeof content === 'string' ? content : '').trim();
+    if (!text) return { error: `Pusta odpowiedź z ${label}.` };
+    return { text };
+  } catch (e) {
+    return { error: errTimeout(e) ?? 'Brak internetu lub błąd połączenia.' };
+  }
+}
+
+async function anthropicChat(
+  cfg: AiConfig,
+  system: string,
+  history: ChatMessage[],
+): Promise<{ text?: string; error?: string }> {
+  try {
+    const res = await postJson(
+      'https://api.anthropic.com/v1/messages',
+      {
+        'x-api-key': cfg.apiKey.trim(),
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      {
+        model: resolveModel(cfg),
+        max_tokens: 1024,
+        system,
+        messages: history.map((m) => ({
+          role: m.role === 'ai' ? 'assistant' : 'user',
+          content: m.text,
+        })),
+      },
+      60000,
+    );
+    if (!res.ok) {
+      if (res.status === 401 || res.status === 403) {
+        return { error: 'Nieprawidłowy klucz API Anthropic.' };
+      }
+      if (res.status === 404) {
+        return {
+          error: `Nie znaleziono modelu "${resolveModel(cfg)}". Sprawdź nazwę w Ustawieniach.`,
+        };
+      }
+      return { error: `Błąd Anthropic Claude (${res.status}).` };
+    }
+    const data = (await res.json()) as {
+      content?: { type?: string; text?: string }[];
+    };
+    const text = (data.content ?? [])
+      .filter((b) => b.type === 'text')
+      .map((b) => b.text ?? '')
+      .join('')
+      .trim();
+    if (!text) return { error: 'Pusta odpowiedź z Claude.' };
+    return { text };
+  } catch (e) {
+    return { error: errTimeout(e) ?? 'Brak internetu lub błąd połączenia.' };
+  }
+}
+
+/** Czat tekstowy z wybranym dostawcą (historia + prompt systemowy). */
+export async function chatWithAi(
+  cfg: AiConfig,
+  system: string,
+  history: ChatMessage[],
+): Promise<{ text?: string; error?: string }> {
+  if (cfg.apiKey.trim() === '') {
+    return {
+      error: `Brak klucza API (${providerInfo(cfg.provider).label}). Dodaj go w Ustawieniach.`,
+    };
+  }
+  switch (cfg.provider) {
+    case 'openai':
+      return openAiCompatibleChat(
+        cfg,
+        system,
+        history,
+        {
+          baseUrl: 'https://api.openai.com/v1/chat/completions',
+          badKeyHint: 'Sprawdź klucz w Ustawieniach.',
+        },
+        'OpenAI',
+      );
+    case 'xai':
+      return openAiCompatibleChat(
+        cfg,
+        system,
+        history,
+        {
+          baseUrl: 'https://api.x.ai/v1/chat/completions',
+          badKeyHint: 'Sprawdź klucz w console.x.ai.',
+        },
+        'Grok',
+      );
+    case 'openrouter':
+      return openAiCompatibleChat(
+        cfg,
+        system,
+        history,
+        {
+          baseUrl: 'https://openrouter.ai/api/v1/chat/completions',
+          extraHeaders: {
+            'HTTP-Referer': 'https://kalorie.app',
+            'X-Title': 'Kalorie',
+          },
+          badKeyHint: 'Sprawdź klucz w openrouter.ai.',
+        },
+        'OpenRouter',
+      );
+    case 'anthropic':
+      return anthropicChat(cfg, system, history);
+    case 'google':
+    default:
+      return googleChat(cfg, system, history);
+  }
+}

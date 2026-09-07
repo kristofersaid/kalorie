@@ -22,6 +22,7 @@ lokalną bazę na telefonie.
 | 📊 Statystyki | Wykres kcal 7/14/30 dni, średnie makro, top 5 produktów |
 | ⭐ Ulubione | Produkty z gwiazdkami (ze zdjęciami) + **szablony posiłków złożonych** (np. „Moja owsianka”) |
 | 🏃 Aktywność | Treningi (typ + czas + dystans → kcal z MET i wagi) albo same kcal; bilans netto na dashboardzie, historii i statystykach |
+| 🤖 Asystent AI | Czat z AI widzącym Twój dzień (posiłki, cele, godzina) + przycisk „Co mogę zjeść?” z propozycją następnego posiłku |
 | ⚙️ Ustawienia | Cele kcal/makro, klucz AI, model AI, motyw, eksport/import CSV, test połączenia, czyszczenie danych |
 
 ## 🚀 Szybki start (Expo Go)
