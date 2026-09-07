@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import Markdown from 'react-native-markdown-display';
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   Text,
   TextInput,
@@ -124,7 +126,11 @@ export function AssistantScreen({ route }: Props) {
   }, []);
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={80}>
+      <View style={{ flex: 1 }}>
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={{ padding: 12, gap: 8, paddingBottom: 16 }}
@@ -301,6 +307,7 @@ export function AssistantScreen({ route }: Props) {
           AI widzi Twój dzisiejszy dzień. Wyliczenia traktuj orientacyjnie.
         </Text>
       </View>
-    </View>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
