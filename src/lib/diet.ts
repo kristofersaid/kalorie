@@ -8,7 +8,8 @@ export const ASSISTANT_SYSTEM = `Jesteś polskim dietetykiem-asystentem w prywat
 Odpowiadaj krótko i konkretnie, po polsku. Proponując posiłki podawaj gramaturę
 i przybliżone makro (kcal, białko, tłuszcze, węglowodany). Nie wymyślaj danych
 o użytkowniku spoza podanego kontekstu. Pamiętaj, że Twoje wyliczenia kalorii
-to oszacowania — przypomnij o tym tylko, gdy to istotne.`;
+to oszacowania — przypomnij o tym tylko, gdy to istotne.
+Formatuj odpowiedź w markdown: nagłówki, pogrubienia, listy i tabele, żeby dobrze wyglądała w aplikacji.`;
 
 function mealSlotByHour(h: number): string {
   if (h < 10) return 'śniadanie';

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import Markdown from 'react-native-markdown-display';
 import {
   ActivityIndicator,
   ScrollView,
@@ -8,13 +9,14 @@ import {
   View,
 } from 'react-native';
 import { useTheme } from '@react-navigation/native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AiConfig, ChatMessage, chatWithAi } from '../lib/ai';
 import { ASSISTANT_SYSTEM, dietSnapshot, suggestPrompt } from '../lib/diet';
 import { aiConfigOf, useStore } from '../store/useStore';
 import { RootStackParamList } from '../nav';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Assistant'>;
+type Props = {
+  route?: { params?: RootStackParamList['Assistant'] };
+};
 
 type Bubble = ChatMessage | { role: 'error'; text: string } | { role: 'info'; text: string };
 
@@ -111,7 +113,8 @@ export function AssistantScreen({ route }: Props) {
   };
 
   useEffect(() => {
-    if (route.params?.autoAsk && !autoAsked.current) {
+    const autoAsk = route?.params?.autoAsk ?? false;
+    if (autoAsk && !autoAsked.current) {
       autoAsked.current = true;
       const t = setTimeout(() => askSuggestion(), 400);
       return () => clearTimeout(t);
@@ -159,6 +162,50 @@ export function AssistantScreen({ route }: Props) {
             );
           }
           const mine = m.role === 'user';
+          const mdStyle = {
+            body: { color: colors.text, fontSize: 14 },
+            heading1: { color: colors.text, fontSize: 18, fontWeight: '800' as const, marginVertical: 6 },
+            heading2: { color: colors.text, fontSize: 16, fontWeight: '800' as const, marginVertical: 5 },
+            heading3: { color: colors.text, fontSize: 15, fontWeight: '700' as const, marginVertical: 4 },
+            strong: { color: colors.text, fontWeight: '700' as const },
+            em: { color: colors.text, fontStyle: 'italic' as const },
+            bullet_list: { marginVertical: 4 },
+            ordered_list: { marginVertical: 4 },
+            list_item: { color: colors.text, marginVertical: 2 },
+            bullet_list_icon: { color: colors.primary },
+            ordered_list_icon: { color: colors.primary },
+            code_inline: {
+              color: colors.text,
+              backgroundColor: colors.border,
+              borderRadius: 4,
+              paddingHorizontal: 4,
+            },
+            fence: {
+              backgroundColor: colors.border,
+              borderRadius: 8,
+              padding: 8,
+            },
+            code_block: { color: colors.text, fontSize: 13 },
+            blockquote: {
+              backgroundColor: colors.border,
+              borderLeftColor: colors.primary,
+              borderLeftWidth: 3,
+              padding: 8,
+              borderRadius: 6,
+            },
+            hr: { backgroundColor: colors.border, height: 1, marginVertical: 8 },
+            link: { color: colors.primary },
+            table: { borderColor: colors.border, borderWidth: 1, borderRadius: 6 },
+            th: {
+              color: colors.text,
+              fontWeight: '700' as const,
+              padding: 6,
+              borderColor: colors.border,
+              borderWidth: 1,
+            },
+            td: { color: colors.text, padding: 6, borderColor: colors.border, borderWidth: 1 },
+            tr: { borderColor: colors.border, borderBottomWidth: 1 },
+          };
           return (
             <View
               key={i}
@@ -168,12 +215,15 @@ export function AssistantScreen({ route }: Props) {
                 borderWidth: mine ? 0 : 1,
                 borderColor: colors.border,
                 borderRadius: 14,
-                padding: 10,
+                padding: mine ? 10 : 4,
+                paddingHorizontal: mine ? 10 : 12,
                 maxWidth: '88%',
               }}>
-              <Text style={{ color: mine ? '#fff' : colors.text }}>
-                {m.text}
-              </Text>
+              {mine ? (
+                <Text style={{ color: '#fff' }}>{m.text}</Text>
+              ) : (
+                <Markdown style={mdStyle}>{m.text}</Markdown>
+              )}
             </View>
           );
         })}

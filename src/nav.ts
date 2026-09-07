@@ -3,6 +3,7 @@ export type TabParamList = {
   Historia: undefined;
   Baza: undefined;
   Ulubione: undefined;
+  AI: undefined;
   Ustawienia: undefined;
 };
 
