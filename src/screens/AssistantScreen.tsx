@@ -22,6 +22,11 @@ type Props = {
 
 type Bubble = ChatMessage | { role: 'error'; text: string } | { role: 'info'; text: string };
 
+const GREETING: Bubble = {
+  role: 'info',
+  text: 'Cześć! Widzę, co dziś zjadłeś, Twoje cele i która godzina. Zapytaj o dietę albo stuknij „Co mogę zjeść?”.',
+};
+
 /**
  * Asystent diety: czat z AI, które widzi Twój dzisiejszy dzień
  * (posiłki, cele, reszty, porę dnia) + przycisk propozycji posiłku.
@@ -36,16 +41,18 @@ export function AssistantScreen({ route }: Props) {
   });
   const cfgRef = useRef(aiCfg);
   cfgRef.current = aiCfg;
-  const [messages, setMessages] = useState<Bubble[]>([
-    {
-      role: 'info',
-      text: 'Cześć! Widzę, co dziś zjadłeś, Twoje cele i która godzina. Zapytaj o dietę albo stuknij „Co mogę zjeść?”.',
-    },
-  ]);
+  const [messages, setMessages] = useState<Bubble[]>([GREETING]);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const autoAsked = useRef(false);
+
+  /** Nowy czat: historia żyje tylko na ekranie — czyści bieżącą rozmowę. */
+  const newChat = () => {
+    if (busy) return;
+    setMessages([GREETING]);
+    setInput('');
+  };
 
   const historyForAi = (list: Bubble[]): ChatMessage[] =>
     list
@@ -249,20 +256,38 @@ export function AssistantScreen({ route }: Props) {
         )}
       </ScrollView>
       <View style={{ padding: 10, gap: 8 }}>
-        <TouchableOpacity
-          onPress={askSuggestion}
-          disabled={busy}
-          style={{
-            backgroundColor: '#2e7d32',
-            borderRadius: 12,
-            padding: 13,
-            alignItems: 'center',
-            opacity: busy ? 0.5 : 1,
-          }}>
-          <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15 }}>
-            🍽️ Co mogę zjeść jako następny posiłek?
-          </Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <TouchableOpacity
+            onPress={askSuggestion}
+            disabled={busy}
+            style={{
+              flex: 1,
+              backgroundColor: '#2e7d32',
+              borderRadius: 12,
+              padding: 13,
+              alignItems: 'center',
+              opacity: busy ? 0.5 : 1,
+            }}>
+            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15 }}>
+              🍽️ Co mogę zjeść?
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={newChat}
+            disabled={busy}
+            style={{
+              borderWidth: 1,
+              borderColor: colors.primary,
+              borderRadius: 12,
+              paddingHorizontal: 16,
+              justifyContent: 'center',
+              opacity: busy ? 0.5 : 1,
+            }}>
+            <Text style={{ color: colors.primary, fontWeight: '800', fontSize: 15 }}>
+              ＋ Nowy
+            </Text>
+          </TouchableOpacity>
+        </View>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <TextInput
             value={input}
