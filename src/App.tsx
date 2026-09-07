@@ -31,7 +31,7 @@ const ICONS: Record<string, string> = {
   Historia: '📅',
   Baza: '🗄️',
   Ulubione: '⭐',
-  AI: '💫',
+  AI: '🤖',
   Ustawienia: '⚙️',
 };
 
@@ -57,7 +57,7 @@ function Tabs() {
       <Tab.Screen
         name="AI"
         component={AssistantScreen}
-        options={{ title: 'AI 💫' }}
+        options={{ title: 'AI' }}
       />
       <Tab.Screen name="Ustawienia" component={SettingsScreen} />
     </Tab.Navigator>

@@ -193,27 +193,6 @@ export function DashboardScreen({ navigation }: Props) {
             </View>
           )}
         </View>
-        <TouchableOpacity
-          onPress={() => navigation.navigate('Assistant', { autoAsk: true })}
-          style={{
-            backgroundColor: '#2e7d32',
-            borderRadius: 16,
-            padding: 14,
-            marginTop: 12,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 10,
-          }}>
-          <Text style={{ fontSize: 26 }}>🍽️</Text>
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15 }}>
-              Nie wiesz, co zjeść?
-            </Text>
-            <Text style={{ color: '#fff', opacity: 0.85, fontSize: 13 }}>
-              AI podpowie posiłek pod Twoje reszty makro →
-            </Text>
-          </View>
-        </TouchableOpacity>
         <View
           style={{
             flexDirection: 'row',
