@@ -73,11 +73,6 @@ export function DashboardScreen({ navigation }: Props) {
       headerRight: () => (
         <View style={{ flexDirection: 'row', gap: 4 }}>
           <TouchableOpacity
-            onPress={() => navigation.navigate('Assistant', {})}
-            style={{ padding: 8 }}>
-            <Text style={{ fontSize: 20 }}>🤖</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
             onPress={() => navigation.navigate('Stats')}
             style={{ padding: 8 }}>
             <Text style={{ fontSize: 20 }}>📊</Text>
