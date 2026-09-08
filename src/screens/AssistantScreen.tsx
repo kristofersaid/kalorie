@@ -12,7 +12,16 @@ import {
 } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { AiConfig, ChatMessage, chatWithAi } from '../lib/ai';
-import { ASSISTANT_SYSTEM, dietSnapshot, suggestPrompt } from '../lib/diet';
+import {
+  ASSISTANT_SYSTEM,
+  dietSnapshot,
+  recentMealsToday,
+  suggestPrompt,
+} from '../lib/diet';
+import { updateMeal } from '../db/meals';
+import { MealRow } from '../db/database';
+import { CATEGORIES, validCategory } from '../lib/constants';
+import { fmtG, fmtKcal, stripFences, toDouble } from '../lib/format';
 import { aiConfigOf, useStore } from '../store/useStore';
 import { RootStackParamList } from '../nav';
 
@@ -76,7 +85,11 @@ export function AssistantScreen({ route }: Props) {
       if (r.error) {
         setMessages((prev) => [...prev, { role: 'error', text: r.error as string }]);
       } else {
-        setMessages((prev) => [...prev, { role: 'ai', text: (r.text ?? '').trim() }]);
+        const acted = await tryMealAction((r.text ?? '').trim());
+        setMessages((prev) => [
+          ...prev,
+          { role: 'ai', text: acted ?? (r.text ?? '').trim() },
+        ]);
       }
     } catch {
       setMessages((prev) => [
@@ -87,6 +100,86 @@ export function AssistantScreen({ route }: Props) {
       setBusy(false);
       setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
     }
+  };
+
+  /**
+   * Wykrywa odpowiedź-akcję (JSON update_meal), wykonuje poprawkę w bazie
+   * i zwraca tekst potwierdzenia. Zwraca null dla zwykłych odpowiedzi.
+   */
+  const tryMealAction = async (text: string): Promise<string | null> => {
+    let obj: unknown;
+    try {
+      obj = JSON.parse(stripFences(text));
+    } catch {
+      return null;
+    }
+    if (typeof obj !== 'object' || obj === null) return null;
+    const o = obj as Record<string, unknown>;
+    if (o['action'] !== 'update_meal') return null;
+    const meals = await recentMealsToday().catch(() => [] as MealRow[]);
+    if (meals.length === 0) {
+      return 'Nie mam dziś żadnych posiłków do poprawy — dodaj najpierw jakiś.';
+    }
+    const idRaw = o['meal_id'];
+    let target: MealRow | undefined;
+    if (typeof idRaw === 'number') {
+      target = meals.find((m) => m.id === idRaw);
+    }
+    if (!target && typeof o['nazwa'] === 'string') {
+      const needle = o['nazwa'].toLowerCase();
+      target =
+        meals.find((m) => needle.includes(m.nazwa.toLowerCase())) ??
+        meals.find((m) => m.nazwa.toLowerCase().includes(needle.split(' ')[0]));
+    }
+    if (!target) target = meals[0];
+    const str = (v: unknown, fb: string): string =>
+      typeof v === 'string' && v.trim() !== '' ? v.trim() : fb;
+    const num = (v: unknown, fb: number): number => {
+      const n = toDouble(v, NaN);
+      return Number.isFinite(n) && n >= 0 ? n : fb;
+    };
+    const next = {
+      nazwa: str(o['nazwa'], target.nazwa),
+      kcal: num(o['kcal'], target.kcal),
+      bialko: num(o['bialko_g'], target.bialko),
+      tluszcze: num(o['tluszcze_g'], target.tluszcze),
+      wegle: num(o['weglowodany_g'], target.wegle),
+      waga: num(o['waga_g'], target.waga),
+      kategoria: validCategory(o['kategoria'], target.kategoria),
+      dzien: target.dzien,
+    };
+    try {
+      await updateMeal(target.id, next);
+    } catch {
+      return 'Nie udało się zapisać poprawki w bazie. Spróbuj ponownie.';
+    }
+    useStore.getState().bump();
+    const diff: string[] = [];
+    if (next.nazwa !== target.nazwa) {
+      diff.push(`nazwa: „${target.nazwa}” → „${next.nazwa}”`);
+    }
+    const cmp = (
+      label: string,
+      a: number,
+      b: number,
+      fmt: (v: number) => string,
+    ) => {
+      if (Math.abs(a - b) > 0.049) diff.push(`${label}: ${fmt(a)} → ${fmt(b)}`);
+    };
+    cmp('kcal', target.kcal, next.kcal, (v) => fmtKcal(v));
+    cmp('białko', target.bialko, next.bialko, (v) => fmtG(v));
+    cmp('tłuszcze', target.tluszcze, next.tluszcze, (v) => fmtG(v));
+    cmp('węgle', target.wegle, next.wegle, (v) => fmtG(v));
+    cmp('waga', target.waga, next.waga, (v) => fmtG(v));
+    if (next.kategoria !== target.kategoria) {
+      diff.push(
+        `kategoria: ${CATEGORIES[target.kategoria] ?? '?'} → ${CATEGORIES[next.kategoria] ?? '?'}`,
+      );
+    }
+    if (diff.length === 0) {
+      return `Sprawdziłem „${target.nazwa}” — nic do zmiany, zostawiam jak jest.`;
+    }
+    return `✅ Poprawiono „${target.nazwa}”:\n${diff.map((d) => `• ${d}`).join('\n')}`;
   };
 
   const askSuggestion = async () => {
@@ -329,7 +422,8 @@ export function AssistantScreen({ route }: Props) {
             opacity: 0.5,
             fontSize: 11,
           }}>
-          AI widzi Twój dzisiejszy dzień. Wyliczenia traktuj orientacyjnie.
+          AI widzi Twój dzisiejszy dzień. Możesz też poprawiać posiłki,
+          np. „zmień mielonego na fasolowego”.
         </Text>
       </View>
       </View>
