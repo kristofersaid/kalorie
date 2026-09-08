@@ -139,7 +139,7 @@ export function usdaErrorMessage(e: unknown): string {
   const http = msg.match(/USDA_HTTP_(\d+)/);
   if (http) {
     const code = Number(http[1]);
-    if (code === '429' || code === '403') {
+    if (code === 429 || code === 403) {
       return 'Wyczerpano darmowy limit USDA na tę godzinę. Spróbuj później.';
     }
     return `USDA FoodData: ${httpMeaning(code)}.`;
