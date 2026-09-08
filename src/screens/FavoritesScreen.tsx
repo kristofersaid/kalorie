@@ -313,8 +313,8 @@ function ProductTile({
 
   const confirmAdd = async () => {
     const g = toDouble(grams, 0);
-    if (g <= 0) {
-      Alert.alert('Uwaga', 'Podaj gramaturę większą od zera.');
+    if (!(g >= 0)) {
+      Alert.alert('Uwaga', 'Podaj gramaturę (liczbę nieujemną).');
       return;
     }
     const s = scaleMacros(f.kcal100, f.bialko100, f.tluszcze100, f.wegle100, g);

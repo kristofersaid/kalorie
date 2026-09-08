@@ -89,7 +89,7 @@ export function parseGrams(text: unknown): number | null {
     const one = toGrams(parseFloat(multi[2].replace(',', '.')), multi[3]);
     if (Number.isFinite(count) && count > 0 && one != null) {
       const total = Math.round(count * one);
-      if (total > 0 && total <= 10000) return total;
+      if (total > 0) return total;
     }
   }
   const re = /(\d+(?:[.,]\d+)?)\s*(kg|g|ml|l|cl)\b/gi;
@@ -99,7 +99,7 @@ export function parseGrams(text: unknown): number | null {
     const n = parseFloat(m[1].replace(',', '.'));
     if (!Number.isFinite(n) || n <= 0) continue;
     const g = toGrams(n, m[2]);
-    if (g != null && g > 0 && g <= 10000) last = Math.round(g);
+    if (g != null && g > 0) last = Math.round(g);
   }
   return last;
 }

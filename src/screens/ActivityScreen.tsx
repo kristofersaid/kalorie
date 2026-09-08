@@ -83,8 +83,8 @@ export function ActivityScreen({ navigation, route }: Props) {
     try {
       if (mode === 'kcal') {
         const k = toDouble(kcal, 0);
-        if (!(k > 0)) {
-          Alert.alert('Uwaga', 'Wpisz spalone kalorie.');
+        if (!(k >= 0)) {
+          Alert.alert('Uwaga', 'Wpisz spalone kalorie (liczbę nieujemną).');
           return;
         }
         const input = {

@@ -75,9 +75,7 @@ export function ProductForm({
         kategoria: defCat,
         opakowanieG: (() => {
           const n = parseFloat(totalW.replace(',', '.'));
-          return Number.isFinite(n) && n > 0 && n <= 10000
-            ? Math.round(n)
-            : null;
+          return Number.isFinite(n) && n > 0 ? Math.round(n) : null;
         })(),
       };
       if (initial && initial.id > 0) await updateFavorite(initial.id, data);

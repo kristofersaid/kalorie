@@ -592,9 +592,7 @@ export async function analyzeLabel(
   if (typeof obj['error'] === 'string') return labelError(obj['error']);
   const posOrNull = (v: unknown): number | null => {
     const n = toDouble(v, NaN);
-    return Number.isFinite(n) && n > 0 && n <= 10000
-      ? Math.round(n * 10) / 10
-      : null;
+    return Number.isFinite(n) && n > 0 ? Math.round(n * 10) / 10 : null;
   };
   return {
     nazwa:

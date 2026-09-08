@@ -42,7 +42,8 @@ export function PortionPicker({
           value={String(Math.round(grams))}
           onChangeText={(t) => {
             const n = parseFloat(t.replace(',', '.'));
-            if (Number.isFinite(n) && n > 0 && n <= 2000) setGrams(n);
+            // Bez limitów: dowolna nieujemna gramatura.
+            if (Number.isFinite(n) && n >= 0) setGrams(n);
           }}
           keyboardType="numeric"
           style={{

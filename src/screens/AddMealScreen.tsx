@@ -175,6 +175,7 @@ export function AddMealScreen({ navigation, route }: Props) {
             [
               ['camera', '📷 Aparat'],
               ['search', '🔍 Szukaj'],
+              ['manual', '✏️ Wpis'],
             ] as [Tab, string][]
         ).map(([t, label]) => (
           <TouchableOpacity
@@ -391,6 +392,18 @@ function ManualTab(p: {
           {p.editing ? 'Zapisz zmiany' : 'Dodaj posiłek'}
         </Text>
       </TouchableOpacity>
+      {!p.editing && (
+        <Text
+          style={{
+            textAlign: 'center',
+            color: colors.text,
+            opacity: 0.6,
+            fontSize: 12,
+          }}>
+          Szybki wpis tylko do dziennika dnia — nie zapisuje się w bazie
+          produktów.
+        </Text>
+      )}
     </ScrollView>
   );
 }

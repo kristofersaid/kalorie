@@ -323,9 +323,7 @@ export function CreatorScreen({ navigation, route }: Props) {
         kategoria: defCat,
         opakowanieG: (() => {
           const n = parseFloat(totalW.replace(',', '.'));
-          return Number.isFinite(n) && n > 0 && n <= 10000
-            ? Math.round(n)
-            : null;
+          return Number.isFinite(n) && n > 0 ? Math.round(n) : null;
         })(),
       };
       if (editId != null) await updateFavorite(editId, data);

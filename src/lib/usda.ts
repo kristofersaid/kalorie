@@ -68,7 +68,7 @@ function fromFdc(f: FdcFood, barcode: string | null): OffProduct | null {
   let porcja: number | null = null;
   const ss = toDouble(f.servingSize, 0);
   const unit = (f.servingSizeUnit ?? '').toLowerCase();
-  if (ss > 0 && ss <= 10000 && (unit === 'g' || unit === 'ml')) {
+  if (ss > 0 && (unit === 'g' || unit === 'ml')) {
     porcja = Math.round(ss * 10) / 10;
   }
   return {
