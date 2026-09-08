@@ -1,5 +1,6 @@
 import { OFF_PRODUCT_URL, OFF_SEARCH_URL } from './constants';
 import { toDouble } from './format';
+import { httpMeaning } from './httpErrors';
 import { FavoriteRow } from '../db/database';
 
 export type OffProduct = {
@@ -146,11 +147,11 @@ export function offErrorMessage(e: unknown): string {
   }
   const http = msg.match(/OFF_HTTP_(\d+)/);
   if (http) {
-    const code = http[1];
-    if (code === '429') {
+    const code = Number(http[1]);
+    if (code === 429) {
       return 'Open Food Facts ograniczył zapytania (za dużo prób). Odczekaj minutę.';
     }
-    return `Serwer Open Food Facts zwrócił błąd ${code}. Spróbuj później.`;
+    return `Open Food Facts: ${httpMeaning(code)}.`;
   }
   if (msg.includes('OFF_JSON')) {
     return 'Serwer OFF zwrócił odpowiedź, której nie da się odczytać (zła sieć / przechwytywanie?). Spróbuj w innej sieci.';

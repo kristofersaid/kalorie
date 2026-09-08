@@ -1,4 +1,5 @@
 import { OffProduct, parseGrams } from './off';
+import { httpMeaning } from './httpErrors';
 import { toDouble } from './format';
 
 /**
@@ -137,11 +138,11 @@ export function usdaErrorMessage(e: unknown): string {
   }
   const http = msg.match(/USDA_HTTP_(\d+)/);
   if (http) {
-    const code = http[1];
+    const code = Number(http[1]);
     if (code === '429' || code === '403') {
       return 'Wyczerpano darmowy limit USDA na tę godzinę. Spróbuj później.';
     }
-    return `Serwer USDA zwrócił błąd ${code}.`;
+    return `USDA FoodData: ${httpMeaning(code)}.`;
   }
   if (msg.includes('USDA_JSON')) {
     return 'Serwer USDA zwrócił odpowiedź, której nie da się odczytać. Spróbuj w innej sieci.';

@@ -4,6 +4,7 @@ import {
   GEMINI_PROMPT,
 } from './constants';
 import { stripFences, toDouble } from './format';
+import { httpMeaning } from './httpErrors';
 
 export type AiProviderId =
   | 'google'
@@ -175,7 +176,7 @@ async function googleText(
         };
       }
       return {
-        error: `Błąd Google Gemini (${res.status}). Sprawdź klucz, model i internet.`,
+        error: `Google Gemini: ${httpMeaning(res.status)}. Sprawdź klucz, model i internet.`,
       };
     }
     const data = (await res.json()) as {
@@ -246,8 +247,7 @@ async function openAiCompatibleText(
           )}". Sprawdź nazwę modelu w Ustawieniach.`,
         };
       }
-      return { error: `Błąd ${hint}. Sprawdź klucz, model i internet.` };
-    }
+      return { error: `Błąd ${hint}. Sprawdź klucz, model i internet.` };    }
     const data = (await res.json()) as {
       choices?: { message?: { content?: unknown } }[];
     };
@@ -332,7 +332,7 @@ async function anthropicText(
         };
       }
       return {
-        error: `Błąd Anthropic Claude (${res.status}). Sprawdź klucz, model i internet.`,
+        error: `Anthropic Claude: ${httpMeaning(res.status)}. Sprawdź klucz, model i internet.`,
       };
     }
     const data = (await res.json()) as {
@@ -383,7 +383,7 @@ export async function listGoogleModels(
             'Błąd 401: Google odrzuciło klucz. Wklej świeży klucz z AI Studio.',
         };
       }
-      return { models: [], error: `Błąd Google (${res.status}).` };
+      return { models: [], error: `Google: ${httpMeaning(res.status)}.` };
     }
     const data = (await res.json()) as {
       models?: {
@@ -745,8 +745,11 @@ async function openAiCompatibleChat(
         };
       }
       const txt = await res.text().catch(() => '');
+      const apiMsg = extractApiMessage(txt);
       return {
-        error: `Błąd ${extractApiMessage(txt) ?? label + ' (' + res.status + ')'}.`,
+        error: apiMsg
+          ? `Błąd ${apiMsg} (${res.status}). Sprawdź klucz, model i internet.`
+          : `${label}: ${httpMeaning(res.status)}. Sprawdź klucz, model i internet.`,
       };
     }
     const data = (await res.json()) as {
