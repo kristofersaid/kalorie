@@ -288,6 +288,71 @@ export function FavoritesScreen() {
 
 // ── Kafelek produktu ─────────────────────────────────────────
 
+/** Licznik sztuk (np. 3 jajka): ustawia gramaturę w formularzu. */
+function PiecesRow({
+  perPiece,
+  onPick,
+}: {
+  perPiece: number;
+  onPick: (grams: number) => void;
+}) {
+  const { colors } = useTheme();
+  const [n, setN] = useState(1);
+  const total = Math.round(n * perPiece * 10) / 10;
+  const btn = {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.card,
+  } as const;
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        backgroundColor: colors.card,
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderRadius: 10,
+        padding: 8,
+      }}>
+      <TouchableOpacity
+        onPress={() => {
+          const v = Math.max(1, n - 1);
+          setN(v);
+          onPick(Math.round(v * perPiece * 10) / 10);
+        }}
+        style={btn}>
+        <Text style={{ fontSize: 20, color: colors.text }}>−</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => onPick(total)}
+        style={{ flex: 1, alignItems: 'center' }}>
+        <Text style={{ fontWeight: '800', color: colors.text, fontSize: 15 }}>
+          {n} szt. = {total} g
+        </Text>
+        <Text style={{ fontSize: 11, color: colors.text, opacity: 0.6 }}>
+          1 szt. = {perPiece} g — stuknij, aby wpisać
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => {
+          const v = n + 1;
+          setN(v);
+          onPick(Math.round(v * perPiece * 10) / 10);
+        }}
+        style={{ ...btn, backgroundColor: colors.primary, borderWidth: 0 }}>
+        <Text style={{ fontSize: 20, color: '#fff' }}>+</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 function ProductTile({
   f,
   onStar,
@@ -394,6 +459,14 @@ function ProductTile({
                 Całość ({Math.round(f.opakowanie_g as number)} g)
               </Text>
             </TouchableOpacity>
+          )}
+          {f.sztuka_g != null && f.sztuka_g > 0 && (
+            <PiecesRow
+              perPiece={f.sztuka_g}
+              onPick={(g) => {
+                setGrams(String(Math.round(g * 10) / 10));
+              }}
+            />
           )}
           <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
             <TextInput

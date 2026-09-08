@@ -51,6 +51,7 @@ export function CreatorScreen({ navigation, route }: Props) {
   const [code, setCode] = useState('');
   const [photo, setPhoto] = useState<string | null>(null);
   const [totalW, setTotalW] = useState('');
+  const [pieceW, setPieceW] = useState('');
   const [defCat, setDefCat] = useState(4);
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -84,6 +85,11 @@ export function CreatorScreen({ navigation, route }: Props) {
           setTotalW(
             row.opakowanie_g != null && row.opakowanie_g > 0
               ? String(Math.round(row.opakowanie_g))
+              : '',
+          );
+          setPieceW(
+            row.sztuka_g != null && row.sztuka_g > 0
+              ? String(Math.round(row.sztuka_g * 10) / 10)
               : '',
           );
         }
@@ -325,6 +331,12 @@ export function CreatorScreen({ navigation, route }: Props) {
           const n = parseFloat(totalW.replace(',', '.'));
           return Number.isFinite(n) && n > 0 ? Math.round(n) : null;
         })(),
+        sztukaG: (() => {
+          const n = parseFloat(pieceW.replace(',', '.'));
+          return Number.isFinite(n) && n > 0
+            ? Math.round(n * 10) / 10
+            : null;
+        })(),
       };
       if (editId != null) await updateFavorite(editId, data);
       else await insertFavorite(data);
@@ -438,6 +450,17 @@ export function CreatorScreen({ navigation, route }: Props) {
         value={totalW}
         onChangeText={setTotalW}
         placeholder="np. 500 (butelka 500 ml) albo 150 (baton)"
+        placeholderTextColor={colors.text + '66'}
+        keyboardType="numeric"
+        style={inputStyle}
+      />
+      <Text style={{ color: colors.text, marginBottom: 4, fontSize: 13 }}>
+        Waga 1 sztuki w g (opcjonalnie — do dodawania sztukami, np. jajko 60 g)
+      </Text>
+      <TextInput
+        value={pieceW}
+        onChangeText={setPieceW}
+        placeholder="np. 60"
         placeholderTextColor={colors.text + '66'}
         keyboardType="numeric"
         style={inputStyle}

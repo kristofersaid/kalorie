@@ -436,6 +436,7 @@ function SearchTab(p: {
         zdjecie: string | null;
         opakowanieG?: number | null;
         porcjaG?: number | null;
+        sztukaG?: number | null;
       } & { fromLocal: boolean })
     | null
   >(null);
@@ -590,6 +591,7 @@ function SearchTab(p: {
           wegle100={picked.wegle100}
           grams={grams}
           setGrams={setGrams}
+          pieceGrams={picked.sztukaG ?? null}
           extraChips={[
             ...(picked.opakowanieG
               ? [
@@ -705,6 +707,7 @@ function SearchTab(p: {
                   zdjecie: f.zdjecie,
                   opakowanieG: f.opakowanie_g,
                   porcjaG: null,
+                  sztukaG: f.sztuka_g,
                   fromLocal: true,
                 });
                 setGrams(100);

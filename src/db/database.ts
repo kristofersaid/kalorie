@@ -32,6 +32,8 @@ export type FavoriteRow = {
   kategoria: number;
   /** Całkowita waga opakowania w g/ml (do chipu „Całość”), null gdy brak. */
   opakowanie_g: number | null;
+  /** Waga 1 sztuki w g (do trybu „sztuki”), null gdy brak. */
+  sztuka_g: number | null;
   created_at: string;
 };
 
@@ -104,6 +106,7 @@ export async function getDb(): Promise<SQLite.SQLiteDatabase> {
         ulubione INTEGER NOT NULL DEFAULT 1,
         kategoria INTEGER NOT NULL DEFAULT 4,
         opakowanie_g REAL,
+        sztuka_g REAL,
         created_at TEXT NOT NULL
       );
       CREATE TABLE IF NOT EXISTS templates (
@@ -149,6 +152,12 @@ export async function getDb(): Promise<SQLite.SQLiteDatabase> {
     // Migracja: całkowita waga opakowania (chip „Całość”).
     try {
       await db.execAsync('ALTER TABLE favorites ADD COLUMN opakowanie_g REAL;');
+    } catch {
+      // Kolumna już istnieje – nic do zrobienia.
+    }
+    // Migracja: waga 1 sztuki (tryb „sztuki” w porcjach).
+    try {
+      await db.execAsync('ALTER TABLE favorites ADD COLUMN sztuka_g REAL;');
     } catch {
       // Kolumna już istnieje – nic do zrobienia.
     }

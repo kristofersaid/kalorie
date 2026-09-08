@@ -409,6 +409,7 @@ export function ScannerScreen() {
             wegle100={product.wegle100}
             grams={grams}
             setGrams={setGrams}
+            pieceGrams={product.sztukaG ?? null}
             extraChips={[
               ...(product.opakowanieG
                 ? [

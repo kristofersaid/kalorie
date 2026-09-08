@@ -164,6 +164,9 @@ export function BazaScreen({ navigation }: Props) {
                   {f.opakowanie_g != null && f.opakowanie_g > 0
                     ? ` • opak.: ${Math.round(f.opakowanie_g)} g`
                     : ''}
+                  {f.sztuka_g != null && f.sztuka_g > 0
+                    ? ` • 1 szt.: ${f.sztuka_g} g`
+                    : ''}
                   {`\nZwykle: ${CATEGORIES[f.kategoria] ?? CATEGORIES[4]}`}
                 </Text>
               </View>

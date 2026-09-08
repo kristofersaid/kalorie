@@ -17,6 +17,8 @@ export type OffProduct = {
   porcjaG: number | null;
   /** Kategoria z MOJEJ bazy (tylko dla wyników lokalnych). */
   kategoria?: number | null;
+  /** Waga 1 sztuki w g (tylko dla wyników lokalnych). */
+  sztukaG?: number | null;
 };
 
 function pickName(p: Record<string, unknown>): string {
@@ -196,6 +198,10 @@ export function offFromFavorite(f: FavoriteRow): OffProduct {
         : null,
     porcjaG: null,
     kategoria: f.kategoria,
+    sztukaG:
+      f.sztuka_g != null && f.sztuka_g > 0
+        ? Math.round(f.sztuka_g * 10) / 10
+        : null,
   };
 }
 

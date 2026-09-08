@@ -460,6 +460,7 @@ export function SmartCapture({
           wegle100={p.wegle100}
           grams={grams}
           setGrams={setGrams}
+          pieceGrams={p.sztukaG ?? null}
           extraChips={[
             ...(p.opakowanieG
               ? [
