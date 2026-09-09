@@ -14,7 +14,6 @@ import { RootStackParamList, TabParamList } from './nav';
 import { DashboardScreen } from './screens/DashboardScreen';
 import { HistoryScreen } from './screens/HistoryScreen';
 import { BazaScreen } from './screens/BazaScreen';
-import { FavoritesScreen } from './screens/FavoritesScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { AddMealScreen } from './screens/AddMealScreen';
 import { ActivityScreen } from './screens/ActivityScreen';
@@ -30,7 +29,6 @@ const ICONS: Record<string, string> = {
   Start: '🏠',
   Historia: '📅',
   Baza: '🗄️',
-  Ulubione: '⭐',
   AI: '🤖',
   Ustawienia: '⚙️',
 };
@@ -53,7 +51,6 @@ function Tabs() {
         component={BazaScreen}
         options={{ title: 'Moja baza' }}
       />
-      <Tab.Screen name="Ulubione" component={FavoritesScreen} />
       <Tab.Screen
         name="AI"
         component={AssistantScreen}

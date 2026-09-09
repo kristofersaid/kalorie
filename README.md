@@ -20,7 +20,6 @@ lokalną bazę na telefonie.
 | 🤖 AI | 5 dostawców do wyboru: Google Gemini, OpenAI, xAI Grok, Anthropic Claude, OpenRouter (własny klucz + model) |
 | 📅 Historia | Polski kalendarz z kropkami 🟢 poniżej / 🟡 w normie / 🔴 powyżej celu, edycja i usuwanie wpisów |
 | 📊 Statystyki | Wykres kcal 7/14/30 dni, średnie makro, top 5 produktów |
-| ⭐ Ulubione | Produkty z gwiazdkami (ze zdjęciami) + **szablony posiłków złożonych** (np. „Moja owsianka”) |
 | 🏃 Aktywność | Treningi (typ + czas + dystans → kcal z MET i wagi) albo same kcal; bilans netto na dashboardzie, historii i statystykach |
 | 🤖 Asystent AI | Czat z AI widzącym Twój dzień (posiłki, cele, godzina) + przycisk „Co mogę zjeść?” z propozycją następnego posiłku |
 | ⚙️ Ustawienia | Cele kcal/makro, klucz AI, model AI, motyw, eksport/import CSV, test połączenia, czyszczenie danych |
@@ -66,7 +65,7 @@ src/
 
 ## 🔒 Prywatność
 
-- Posiłki, ulubione, szablony → SQLite na urządzeniu. Ustawienia i klucze → AsyncStorage.
+- Posiłki, baza produktów, treningi → SQLite na urządzeniu. Ustawienia i klucze → AsyncStorage.
 - Sieć: tylko `generativelanguage.googleapis.com` / API wybranego dostawcy AI
   (zdjęcia) oraz `world.openfoodfacts.org` (produkty).
 - Poza telefon nic nie wychodzi. Eksport historii do CSV w Ustawieniach.
