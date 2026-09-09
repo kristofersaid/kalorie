@@ -22,3 +22,7 @@ Thumbs.db
 .tmp-dist/
 .tmp-expo.log
 .tmp-expo.err
+
+# Lokalne buildy Android (APK buduje CI na tagach)
+android/app/build/
+*.apk
